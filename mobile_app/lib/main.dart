@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile_app/screens/national_feed_screen.dart';
 import 'package:mobile_app/theme/app_theme.dart';
+import 'package:mobile_app/views/national_feed_screen.dart';
 
 void main() {
   runApp(
