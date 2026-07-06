@@ -1,55 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/views/complaint_card.dart';
-
-// Sample data provider supplying civic complaints matching the MongoDB schema
-final complaintsListProvider = Provider<List<Complaint>>((ref) {
-  final now = DateTime.now();
-  return [
-    Complaint(
-      id: '668a1b2c3d4e5f6a7b8c9d01',
-      title: 'Crater-Sized Potholes on Western Express Highway Commute',
-      description: 'Multiple deep potholes near Andheri flyover causing severe traffic jams and vehicle damage during peak monsoon commute hours.',
-      rtoCode: 'MH-01',
-      imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80',
-      satireText: 'Municipal Corporation clarifies that these are not potholes, but a newly commissioned lunar surface simulation park for aspiring astronauts.',
-      upvotes: 1842,
-      createdAt: now.subtract(const Duration(hours: 2)),
-      comments: [
-        'My hatchback almost disappeared into the third crater near the exit ramp. Can we get a warning sign at least?'
-      ],
-    ),
-    Complaint(
-      id: '668a1b2c3d4e5f6a7b8c9d02',
-      title: 'Barricaded Road Excavation Left Abandoned for 8 Months',
-      description: 'Outer Ring Road lane reduced to single file due to unfinished underground wiring and drainage work with no workers on site.',
-      rtoCode: 'DL-01',
-      imageUrl: 'https://images.unsplash.com/photo-1541888946425-d0ebb18086f6?auto=format&fit=crop&w=800&q=80',
-      satireText: 'Archaeological Survey of India declared the excavation a protected heritage site after discovering tools from the 2018 municipal budget.',
-      upvotes: 2410,
-      createdAt: now.subtract(const Duration(hours: 5)),
-      comments: [], // Empty comments to demonstrate clean centered gray placeholder text
-    ),
-    Complaint(
-      id: '668a1b2c3d4e5f6a7b8c9d03',
-      title: 'Uncollected Refuse Overflowing onto Tech Park Pedestrian Walkway',
-      description: 'Garbage collection trucks have skipped the Whitefield sector for three consecutive days, blocking pedestrian sidewalk access completely.',
-      rtoCode: 'KA-05',
-      imageUrl: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80',
-      satireText: 'Local tech startups are now pitching AI-powered odor-canceling headphones to help pedestrians navigate the new organic biodiversity corridor.',
-      upvotes: 950,
-      createdAt: now.subtract(const Duration(hours: 12)),
-      comments: [], // Empty comments to demonstrate clean centered gray placeholder text
-    ),
-  ];
-});
 
 class NationalFeedScreen extends ConsumerWidget {
   const NationalFeedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final complaints = ref.watch(complaintsListProvider);
+    final feedAsyncValue = ref.watch(feedNotifierProvider);
     final isSatireMode = ref.watch(satireModeProvider);
     final theme = Theme.of(context);
 
@@ -122,25 +81,90 @@ class NationalFeedScreen extends ConsumerWidget {
             tooltip: 'Simulate Hardware Shake (Toggle Satire)',
           ),
           IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-            tooltip: 'Search Complaints',
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.read(feedNotifierProvider.notifier).fetchFeed(isRefresh: true);
+            },
+            tooltip: 'Refresh Feed from Stitch Endpoint',
           ),
         ],
       ),
       // Overall screen wrapper simulating hardware shake listener
       body: GestureDetector(
         onDoubleTap: toggleSatireMode, // double-tap anywhere on screen background to simulate shake
-        child: ListView.separated(
-          // Lock scroll physics to BouncingScrollPhysics for premium kinetic feedback
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          itemCount: complaints.length,
-          // Explicit SizedBox(height: 16) separator for scannable card padding
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) {
-            final complaint = complaints[index];
-            return ComplaintCard(complaint: complaint);
+        child: feedAsyncValue.when(
+          loading: () => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: Color(0xFFE11D48)),
+                const SizedBox(height: 16),
+                Text(
+                  'Synchronizing civic discourse with Stitch endpoint...',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
+          ),
+          error: (error, stackTrace) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Color(0xFFE11D48), size: 48),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Failed to load civic feed',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    error.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => ref.read(feedNotifierProvider.notifier).fetchFeed(isRefresh: true),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry Fetch'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF27272A),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          data: (complaints) {
+            if (complaints.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No civic complaints recorded in this jurisdiction.',
+                  style: TextStyle(color: Color(0xFF71717A), fontStyle: FontStyle.italic),
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              color: const Color(0xFFE11D48),
+              backgroundColor: const Color(0xFF18181B),
+              onRefresh: () => ref.read(feedNotifierProvider.notifier).fetchFeed(isRefresh: true),
+              child: ListView.separated(
+                // Lock scroll physics to BouncingScrollPhysics for premium kinetic feedback
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                itemCount: complaints.length,
+                // Explicit SizedBox(height: 16) separator for scannable card padding
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final complaint = complaints[index];
+                  return ComplaintCard(complaint: complaint);
+                },
+              ),
+            );
           },
         ),
       ),

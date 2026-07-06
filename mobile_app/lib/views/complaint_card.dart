@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/models/complaint.dart';
 
 // Riverpod 3 provider tracking if AI Satire Mode is toggled (simulated via shake or tap)
 class SatireModeNotifier extends Notifier<bool> {
@@ -10,31 +11,6 @@ class SatireModeNotifier extends Notifier<bool> {
 }
 
 final satireModeProvider = NotifierProvider<SatireModeNotifier, bool>(SatireModeNotifier.new);
-
-// Complaint data model matching MongoDB Atlas schema
-class Complaint {
-  final String id;
-  final String title;
-  final String description;
-  final String rtoCode;
-  final String imageUrl;
-  final String satireText;
-  final int upvotes;
-  final DateTime createdAt;
-  final List<String> comments;
-
-  const Complaint({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.rtoCode,
-    required this.imageUrl,
-    required this.satireText,
-    required this.upvotes,
-    required this.createdAt,
-    this.comments = const [],
-  });
-}
 
 class ComplaintCard extends ConsumerStatefulWidget {
   final Complaint complaint;
