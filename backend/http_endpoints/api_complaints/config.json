@@ -1,0 +1,29 @@
+{
+  "id": "endpoint_api_complaints_post",
+  "name": "api_complaints_post",
+  "route": "/api/complaints",
+  "http_method": "POST",
+  "disabled": false,
+  "validation_method": "HTTP_HEADER_SECRET",
+  "secret_name": "CIVIC_SATIRE_API_KEY",
+  "secret_header_name": "x-api-key",
+  "return_type": "BODY",
+  "function_name": "api_complaints_post",
+  "create_user_on_auth": false,
+  "respond_result": true,
+  "fetch_custom_user_data": false,
+  "cors": {
+    "allowed_origins": [
+      "*"
+    ],
+    "allowed_methods": [
+      "POST",
+      "OPTIONS"
+    ],
+    "allowed_headers": [
+      "Content-Type",
+      "x-api-key",
+      "Authorization"
+    ]
+  }
+}
