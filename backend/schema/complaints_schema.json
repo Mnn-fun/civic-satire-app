@@ -1,0 +1,61 @@
+{
+  "title": "Complaint",
+  "description": "A national civic feed complaint with AI-generated satire.",
+  "type": "object",
+  "required": [
+    "_id",
+    "title",
+    "description",
+    "rto_code",
+    "image_url",
+    "satire_text",
+    "upvotes",
+    "created_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_id": {
+      "bsonType": "objectId",
+      "description": "Unique ObjectId identifier for the complaint."
+    },
+    "title": {
+      "bsonType": "string",
+      "description": "Brief headline of the civic issue.",
+      "minLength": 5,
+      "maxLength": 150
+    },
+    "description": {
+      "bsonType": "string",
+      "description": "Detailed description of the civic complaint.",
+      "minLength": 10,
+      "maxLength": 2000
+    },
+    "rto_code": {
+      "bsonType": "string",
+      "description": "Regional Transport Office code identifying the district (e.g., MH-01, DL-01, KA-05).",
+      "pattern": "^[A-Z]{2}-[0-9]{2,4}$"
+    },
+    "image_url": {
+      "bsonType": "string",
+      "description": "URL of the uploaded photographic evidence.",
+      "pattern": "^https?://.+"
+    },
+    "satire_text": {
+      "bsonType": "string",
+      "description": "AI-generated satirical commentary on the complaint.",
+      "minLength": 1
+    },
+    "upvotes": {
+      "bsonType": [
+        "int",
+        "long"
+      ],
+      "description": "Number of upvotes received from citizens.",
+      "minimum": 0
+    },
+    "created_at": {
+      "bsonType": "date",
+      "description": "Timestamp when the complaint was submitted."
+    }
+  }
+}
