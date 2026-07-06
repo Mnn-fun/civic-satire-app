@@ -1,0 +1,31 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/screens/national_feed_screen.dart';
+import 'package:mobile_app/theme/app_theme.dart';
+
+void main() {
+  runApp(
+    // Wrapping the application in ProviderScope for Riverpod state management
+    const ProviderScope(
+      child: CivicSatireApp(),
+    ),
+  );
+}
+
+class CivicSatireApp extends StatelessWidget {
+  const CivicSatireApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Civic Satire',
+      debugShowCheckedModeBanner: false,
+      // Strict dark Material 3 ThemeData with deep background and high-contrast typography
+      theme: AppTheme.darkTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
+      // Clean routing to the initial screen
+      home: const NationalFeedScreen(),
+    );
+  }
+}
