@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/services/auth_service.dart';
-import 'package:mobile_app/views/admin_panel_screen.dart';
-import 'package:mobile_app/views/national_feed_screen.dart';
+import 'package:mobile_app/views/dashboard_orchestrator.dart';
 
 /// Dark-themed, high-contrast role-selection login screen
 class LoginScreen extends ConsumerStatefulWidget {
@@ -40,13 +39,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
 
       if (success && mounted) {
-        // 4. Execute a Navigator.pushReplacement routing path to appropriate layout
-        final Widget nextScreen = (targetRole == UserRole.admin)
-            ? const AdminPanelScreen()
-            : const NationalFeedScreen();
-
+        // 4. Execute a Navigator.pushReplacement routing path to structural orchestrator
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => nextScreen),
+          MaterialPageRoute(builder: (_) => const DashboardOrchestrator()),
         );
       }
     } catch (e) {
