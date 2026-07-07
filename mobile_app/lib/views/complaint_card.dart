@@ -8,9 +8,11 @@ class SatireModeNotifier extends Notifier<bool> {
   bool build() => false;
 
   void toggle() => state = !state;
+  void setSatireMode(bool value) => state = value;
 }
 
 final satireModeProvider = NotifierProvider<SatireModeNotifier, bool>(SatireModeNotifier.new);
+final isSatireModeProvider = satireModeProvider; // Alias for seamless compatibility
 
 class ComplaintCard extends ConsumerStatefulWidget {
   final Complaint complaint;

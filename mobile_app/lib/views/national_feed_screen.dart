@@ -1,50 +1,119 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/views/complaint_card.dart';
 
-class NationalFeedScreen extends ConsumerWidget {
+class NationalFeedScreen extends ConsumerStatefulWidget {
   const NationalFeedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final feedAsyncValue = ref.watch(feedNotifierProvider);
-    final isSatireMode = ref.watch(satireModeProvider);
-    final theme = Theme.of(context);
+  ConsumerState<NationalFeedScreen> createState() => _NationalFeedScreenState();
+}
 
-    // Toggle AI Satire mode (simulates hardware shake trigger)
-    void toggleSatireMode() {
-      ref.read(satireModeProvider.notifier).toggle();
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                isSatireMode ? Icons.visibility_off : Icons.auto_awesome,
-                color: isSatireMode ? const Color(0xFFA1A1AA) : Colors.amber.shade400,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                isSatireMode ? 'Satire Mode Deactivated (Normal View)' : 'Shake Triggered: AI Satire Overlay Activated!',
+class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
+  StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
+  DateTime? _lastShakeTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _initShakeListener();
+  }
+
+  /// Initializes the hardware accelerometer stream to detect physical shake gestures.
+  void _initShakeListener() {
+    try {
+      // Monitor physical device movement via sensors_plus accelerometerEventStream
+      _accelerometerSubscription = accelerometerEventStream().listen((AccelerometerEvent event) {
+        // Mathematical threshold calculation: check if absolute acceleration force
+        // exceeds a threshold value of 12.0 m/s^2 along the X or Y axis (or 15.0 on Z)
+        if (event.x.abs() > 12.0 || event.y.abs() > 12.0 || event.z.abs() > 15.0) {
+          _handleShakeDetected();
+        }
+      });
+    } catch (e) {
+      debugPrint('Hardware accelerometer stream initialization failed or unsupported: $e');
+    }
+  }
+
+  /// Handles a detected shake with an explicit 500ms debounce window.
+  void _handleShakeDetected() {
+    final now = DateTime.now();
+    // Explicit debounce mechanism (500ms window) so a single physical shake doesn't rapidly trigger multiple times
+    if (_lastShakeTime == null || now.difference(_lastShakeTime!) > const Duration(milliseconds: 500)) {
+      _lastShakeTime = now;
+
+      // Instantly flip Riverpod state provider (isSatireModeProvider) to true with zero delay
+      final isCurrentlySatire = ref.read(isSatireModeProvider);
+      if (!isCurrentlySatire) {
+        ref.read(isSatireModeProvider.notifier).setSatireMode(true);
+        _showSatireSnackBar(true, isHardwareShake: true);
+      } else {
+        // Toggling back to normal view on subsequent shake
+        ref.read(isSatireModeProvider.notifier).setSatireMode(false);
+        _showSatireSnackBar(false, isHardwareShake: true);
+      }
+    }
+  }
+
+  /// Manual toggle for emulator / desktop testing without physical accelerometer hardware
+  void _toggleSatireMode() {
+    final newState = !ref.read(isSatireModeProvider);
+    ref.read(isSatireModeProvider.notifier).setSatireMode(newState);
+    _showSatireSnackBar(newState, isHardwareShake: false);
+  }
+
+  void _showSatireSnackBar(bool isSatireMode, {required bool isHardwareShake}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isSatireMode ? Icons.auto_awesome : Icons.visibility_off,
+              color: isSatireMode ? Colors.amber.shade400 : const Color(0xFFA1A1AA),
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isSatireMode
+                    ? (isHardwareShake ? '⚡ SHAKE DETECTED: AI Satire Overlay Activated!' : 'AI Satire Overlay Activated!')
+                    : 'Satire Mode Deactivated (Normal View)',
                 style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
               ),
-            ],
-          ),
-          backgroundColor: isSatireMode ? const Color(0xFF27272A) : const Color(0xFFE11D48),
-          duration: const Duration(milliseconds: 1800),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ],
         ),
-      );
-    }
+        backgroundColor: isSatireMode ? const Color(0xFFE11D48) : const Color(0xFF27272A),
+        duration: const Duration(milliseconds: 1800),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    // Cleanly dispose of stream listener when widget unmounts to prevent memory leaks during testing
+    _accelerometerSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feedAsyncValue = ref.watch(feedNotifierProvider);
+    final isSatireMode = ref.watch(isSatireModeProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        // Clicking app bar title simulates hardware shake trigger
+        // Clicking app bar title simulates hardware shake trigger for emulator testing
         title: GestureDetector(
-          onTap: toggleSatireMode,
+          onTap: _toggleSatireMode,
           behavior: HitTestBehavior.opaque,
           child: Row(
             children: [
@@ -59,7 +128,7 @@ class NationalFeedScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  'TAP/SHAKE',
+                  'SHAKE/TAP',
                   style: TextStyle(color: Color(0xFF71717A), fontSize: 9, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -67,7 +136,6 @@ class NationalFeedScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          // Action button to trigger mock shake / toggle satire mode
           IconButton(
             icon: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -77,7 +145,7 @@ class NationalFeedScreen extends ConsumerWidget {
                 color: isSatireMode ? Colors.amber.shade400 : const Color(0xFFFAFAFA),
               ),
             ),
-            onPressed: toggleSatireMode,
+            onPressed: _toggleSatireMode,
             tooltip: 'Simulate Hardware Shake (Toggle Satire)',
           ),
           IconButton(
@@ -89,9 +157,8 @@ class NationalFeedScreen extends ConsumerWidget {
           ),
         ],
       ),
-      // Overall screen wrapper simulating hardware shake listener
       body: GestureDetector(
-        onDoubleTap: toggleSatireMode, // double-tap anywhere on screen background to simulate shake
+        onDoubleTap: _toggleSatireMode, // double-tap anywhere on background to simulate shake
         child: feedAsyncValue.when(
           loading: () => Center(
             child: Column(
@@ -141,7 +208,7 @@ class NationalFeedScreen extends ConsumerWidget {
           data: (complaints) {
             if (complaints.isEmpty) {
               return const Center(
-                child: Text(
+              child: Text(
                   'No civic complaints recorded in this jurisdiction.',
                   style: TextStyle(color: Color(0xFF71717A), fontStyle: FontStyle.italic),
                 ),
