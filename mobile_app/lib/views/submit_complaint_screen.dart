@@ -1,6 +1,9 @@
+import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
+import 'package:mobile_app/services/image_picker_service.dart';
 
 class SubmitComplaintScreen extends ConsumerStatefulWidget {
   const SubmitComplaintScreen({super.key});
@@ -16,6 +19,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
   final _rtoCodeController = TextEditingController();
   final _imageUrlController = TextEditingController();
 
+  XFile? _capturedImage;
   bool _isSubmitting = false;
 
   @override
@@ -34,6 +38,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       _descriptionController.text = 'Unfinished drainage trench left wide open across all 3 fast lanes without reflective warning signs or barricades during monsoon commute.';
       _rtoCodeController.text = 'GJ-01';
       _imageUrlController.text = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80';
+      _capturedImage = null;
     });
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -53,9 +58,57 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
     );
   }
 
+  /// Launches native camera or gallery selection using ImagePickerService
+  Future<void> _pickMedia(bool fromCamera) async {
+    final file = await ref.read(imagePickerServiceProvider).pickImage(fromCamera);
+    if (file != null) {
+      setState(() {
+        _capturedImage = file;
+        _imageUrlController.clear(); // Clear URL fallback when native file is picked
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(fromCamera ? Icons.camera_alt : Icons.photo_library, color: Colors.greenAccent, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Media captured from ${fromCamera ? "Camera" : "Device Gallery"}: ${file.name}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF18181B),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Color(0xFF3F3F46)),
+          ),
+        ),
+      );
+    }
+  }
+
   /// Triggers async POST request to Stitch HTTP endpoint with modal loading indicator
   Future<void> _submitToEdgeAgents() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final finalImage = _capturedImage != null ? _capturedImage!.path : _imageUrlController.text.trim();
+    if (finalImage.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please capture a photo from Camera/Gallery or enter an image URL.', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
@@ -102,11 +155,11 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           rtoCode: _rtoCodeController.text.trim().toUpperCase(),
-          imageUrl: _imageUrlController.text.trim(),
+          imageUrl: finalImage,
         );
 
     if (!mounted) return;
-    
+
     // Pop modal loading dialog
     Navigator.of(context).pop();
 
@@ -132,10 +185,13 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
           backgroundColor: const Color(0xFF18181B),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: const BorderSide(color: Color(0xFF3F3F46))),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Color(0xFF3F3F46)),
+          ),
         ),
       );
-      // Return to National Feed screen
+      // Return to previous screen
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -226,20 +282,66 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                   ),
                   validator: (value) => value == null || value.trim().isEmpty ? 'Please enter a description' : null,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-                // Image URL Input Field
-                _buildSectionLabel('Image Infrastructure URL (Unsplash / Cloud)'),
+                // Native Media Capture Buttons (Camera & Device Gallery)
+                _buildSectionLabel('Capture Hazard Media (Camera / Device Storage)'),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _pickMedia(true),
+                        icon: const Icon(Icons.camera_alt_rounded, size: 20),
+                        label: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF27272A),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: Color(0xFFE11D48), width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _pickMedia(false),
+                        icon: const Icon(Icons.photo_library_rounded, size: 20),
+                        label: const Text('Device Gallery', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF27272A),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: Color(0xFF3F3F46), width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Optional Demo URL Field
+                _buildSectionLabel('Optional Fallback URL (for Unsplash / Demo testing)'),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _imageUrlController,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                   decoration: _buildInputDecoration(
-                    hintText: 'https://images.unsplash.com/...',
-                    prefixIcon: Icons.image_outlined,
+                    hintText: 'https://images.unsplash.com/... (optional)',
+                    prefixIcon: Icons.link_rounded,
                   ),
                   onChanged: (val) {
-                    setState(() {}); // Trigger rebuild to update image preview container
+                    if (val.isNotEmpty && _capturedImage != null) {
+                      setState(() {
+                        _capturedImage = null; // Prioritize URL if user types/pastes URL
+                      });
+                    } else {
+                      setState(() {});
+                    }
                   },
                 ),
                 const SizedBox(height: 24),
@@ -248,7 +350,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                 _buildSectionLabel('Infrastructure Image Preview'),
                 const SizedBox(height: 8),
                 Container(
-                  height: 200,
+                  height: 220,
                   width: double.infinity,
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
@@ -267,7 +369,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                     backgroundColor: const Color(0xFFE11D48),
                     disabledBackgroundColor: const Color(0xFFE11D48).withValues(alpha: 0.5),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 4,
                   ),
@@ -327,76 +429,111 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
   }
 
   Widget _buildImagePreviewContent() {
-    final url = _imageUrlController.text.trim();
-    if (url.isEmpty) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    // 1. Check if an image was captured via native Camera or Device Gallery
+    if (_capturedImage != null) {
+      return Stack(
+        fit: StackFit.expand,
         children: [
-          Icon(Icons.image_not_supported_outlined, color: Colors.grey.shade700, size: 48),
-          const SizedBox(height: 12),
-          const Text(
-            'No Image Loaded',
-            style: TextStyle(color: Color(0xFF71717A), fontSize: 14, fontWeight: FontWeight.w600),
+          Image.file(
+            io.File(_capturedImage!.path),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.broken_image_outlined, color: Colors.redAccent, size: 40),
+                  const SizedBox(height: 8),
+                  const Text('Failed to render device media', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  Text(_capturedImage!.path, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Enter a URL above or tap "🪄 Auto-Fill Pitch Mock"',
-            style: TextStyle(color: Color(0xFF52525B), fontSize: 12),
+          Positioned(
+            bottom: 8,
+            right: 8,
+            child: _buildValidationBadge('Device Media Validated (${_capturedImage!.name})'),
           ),
         ],
       );
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.broken_image_outlined, color: Colors.redAccent, size: 40),
-                const SizedBox(height: 8),
-                const Text('Failed to load image URL', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
-                Text(url, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
-              ],
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                    : null,
-                color: const Color(0xFFE11D48),
-              ),
-            );
-          },
-        ),
-        Positioned(
-          bottom: 8,
-          right: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFF3F3F46)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, color: Colors.greenAccent, size: 14),
-                SizedBox(width: 6),
-                Text('Image Validated', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-              ],
-            ),
+    // 2. Check fallback URL text field
+    final url = _imageUrlController.text.trim();
+    if (url.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            url,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.broken_image_outlined, color: Colors.redAccent, size: 40),
+                  const SizedBox(height: 8),
+                  const Text('Failed to load image URL', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  Text(url, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                ],
+              );
+            },
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
+                  color: const Color(0xFFE11D48),
+                ),
+              );
+            },
           ),
+          Positioned(
+            bottom: 8,
+            right: 8,
+            child: _buildValidationBadge('Cloud URL Validated'),
+          ),
+        ],
+      );
+    }
+
+    // 3. Default empty state
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade700, size: 48),
+        const SizedBox(height: 12),
+        const Text(
+          'No Image Captured',
+          style: TextStyle(color: Color(0xFF71717A), fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Tap "Take Photo" or "Device Gallery" above to capture hazard media',
+          style: TextStyle(color: Color(0xFF52525B), fontSize: 12),
         ),
       ],
+    );
+  }
+
+  Widget _buildValidationBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE11D48), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle, color: Colors.greenAccent, size: 14),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }
