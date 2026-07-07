@@ -21,6 +21,8 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
 
   XFile? _capturedImage;
   String? _demoImageUrl;
+  String? _cloudinarySecureUrl;
+  bool _isUploadingToCloudinary = false;
   bool _isSubmitting = false;
 
   @override
@@ -39,6 +41,8 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       _rtoCodeController.text = 'GJ-01';
       _demoImageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80';
       _capturedImage = null;
+      _cloudinarySecureUrl = null;
+      _isUploadingToCloudinary = false;
     });
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -58,8 +62,84 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
     );
   }
 
-  /// Launches native camera or gallery selection using ImagePickerService
-  Future<void> _pickMedia(bool fromCamera) async {
+  /// Displays interactive bottom modal popup sheet with camera and gallery selection
+  void _showMediaPickerBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF18181B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3F3F46),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Select Hazard Documentation Source',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Upload real-time infrastructure defects directly to Cloudinary CDN',
+                  style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE11D48).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFE11D48)),
+                  ),
+                  title: const Text('📸 Take Real-time Photo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: const Text('Launch device camera for verified live field capture', style: TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop();
+                    _pickAndUploadMedia(true);
+                  },
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.photo_library_rounded, color: Colors.blueAccent),
+                  ),
+                  title: const Text('🖼️ Pick from Local Device Gallery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: const Text('Select existing documentation from system storage', style: TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop();
+                    _pickAndUploadMedia(false);
+                  },
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Picks media via ImagePickerService and streams upload into CloudinaryService
+  Future<void> _pickAndUploadMedia(bool fromCamera) async {
     try {
       final file = await ref.read(imagePickerServiceProvider).pickImage(fromCamera);
       if (!mounted) return;
@@ -67,24 +147,31 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
         setState(() {
           _capturedImage = file;
           _demoImageUrl = null; // Clear demo mock when native media is selected
+          _cloudinarySecureUrl = null;
+          _isUploadingToCloudinary = true;
         });
+
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                Icon(fromCamera ? Icons.camera_alt : Icons.photo_library, color: Colors.greenAccent, size: 20),
-                const SizedBox(width: 10),
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE11D48)),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Media captured from ${fromCamera ? "Camera" : "Device Gallery"}: ${file.name}',
+                    'Uploading "${file.name}" directly to Cloudinary...',
                     style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                 ),
               ],
             ),
             backgroundColor: const Color(0xFF18181B),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -92,6 +179,58 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
             ),
           ),
         );
+
+        // Upload directly to Cloudinary CDN
+        try {
+          final secureUrl = await ref.read(cloudinaryServiceProvider).uploadToCloudinary(file);
+          if (!mounted) return;
+          setState(() {
+            _isUploadingToCloudinary = false;
+            _cloudinarySecureUrl = secureUrl;
+          });
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.cloud_done_rounded, color: Colors.greenAccent, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Cloudinary CDN Asset Ready & Cached!',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF18181B),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: Colors.greenAccent),
+              ),
+            ),
+          );
+        } catch (uploadError) {
+          if (!mounted) return;
+          setState(() {
+            _isUploadingToCloudinary = false;
+          });
+          debugPrint('[Cloudinary Upload Error] $uploadError');
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Cloudinary upload offline ($uploadError). Using local file fallback.',
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              backgroundColor: Colors.amber.shade900,
+              duration: const Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -120,6 +259,9 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _isUploadingToCloudinary = false;
+      });
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -141,11 +283,11 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       return;
     }
 
-    String finalImage = _capturedImage != null ? _capturedImage!.path : (_demoImageUrl ?? '');
+    String finalImage = _cloudinarySecureUrl ?? (_capturedImage != null ? _capturedImage!.path : (_demoImageUrl ?? ''));
     if (finalImage.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please capture a photo from Camera or Device Gallery.', style: TextStyle(color: Colors.white)),
+          content: const Text('Please capture a photo by tapping the image box above.', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
         ),
@@ -192,11 +334,12 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       _isSubmitting = true;
     });
 
-    // If native media picked, upload directly to Cloudinary to get secure_url before broadcasting
-    if (_capturedImage != null) {
+    // If native media picked but upload didn't finish earlier, upload fallback
+    if (_cloudinarySecureUrl == null && _capturedImage != null) {
       try {
         final secureUrl = await ref.read(cloudinaryServiceProvider).uploadToCloudinary(_capturedImage!);
         finalImage = secureUrl;
+        _cloudinarySecureUrl = secureUrl;
       } catch (e) {
         debugPrint('[Cloudinary Fallback] Upload error: $e. Using local path fallback.');
       }
@@ -335,65 +478,50 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Native Media Capture Buttons (Camera & Device Gallery)
-                _buildSectionLabel('Capture Hazard Media (Camera / Device Storage)'),
-                const SizedBox(height: 10),
+                // Interactive Infrastructure Image Preview Container
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _pickMedia(true),
-                        icon: const Icon(Icons.camera_alt_rounded, size: 20),
-                        label: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF27272A),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Color(0xFFE11D48), width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 2,
+                    _buildSectionLabel('Infrastructure Image Preview (Tap Box to Capture)'),
+                    if (_capturedImage != null || _demoImageUrl != null)
+                      GestureDetector(
+                        onTap: _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
+                        child: const Text(
+                          'Change Photo',
+                          style: TextStyle(color: Color(0xFFE11D48), fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _pickMedia(false),
-                        icon: const Icon(Icons.photo_library_rounded, size: 20),
-                        label: const Text('Device Gallery', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF27272A),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Color(0xFF3F3F46), width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 2,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 24),
-
-                // High-visibility Image Preview Box
-                _buildSectionLabel('Infrastructure Image Preview'),
                 const SizedBox(height: 8),
-                Container(
-                  height: 220,
-                  width: double.infinity,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF18181B),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF3F3F46), width: 1.5),
+                    child: Container(
+                      height: 230,
+                      width: double.infinity,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF18181B),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isUploadingToCloudinary
+                              ? const Color(0xFFE11D48)
+                              : (_cloudinarySecureUrl != null ? Colors.greenAccent : const Color(0xFF3F3F46)),
+                          width: _isUploadingToCloudinary || _cloudinarySecureUrl != null ? 2.0 : 1.5,
+                        ),
+                      ),
+                      child: _buildImagePreviewContent(),
+                    ),
                   ),
-                  child: _buildImagePreviewContent(),
                 ),
                 const SizedBox(height: 32),
 
                 // Submit to Edge Agents Button
                 ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submitToEdgeAgents,
+                  onPressed: _isSubmitting || _isUploadingToCloudinary ? null : _submitToEdgeAgents,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE11D48),
                     disabledBackgroundColor: const Color(0xFFE11D48).withValues(alpha: 0.5),
@@ -408,7 +536,9 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                       const Icon(Icons.send_rounded, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        _isSubmitting ? 'Transmitting to Edge Agents...' : 'Submit to Edge Agents',
+                        _isUploadingToCloudinary
+                            ? 'Waiting for Cloudinary Upload...'
+                            : (_isSubmitting ? 'Transmitting to Edge Agents...' : 'Submit to Edge Agents'),
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                       ),
                     ],
@@ -458,7 +588,79 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
   }
 
   Widget _buildImagePreviewContent() {
-    // 1. Check if an image was captured via native Camera or Device Gallery
+    // 0. If actively uploading to Cloudinary, display local image with smooth spinning circular progress overlay
+    if (_isUploadingToCloudinary) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          if (_capturedImage != null)
+            Image.file(
+              io.File(_capturedImage!.path),
+              fit: BoxFit.cover,
+            ),
+          Container(
+            color: Colors.black.withValues(alpha: 0.75),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(color: Color(0xFFE11D48), strokeWidth: 3.5),
+                const SizedBox(height: 16),
+                const Text(
+                  'Uploading to Cloudinary CDN...',
+                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _capturedImage?.name ?? 'Processing media file...',
+                  style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 1. If direct secure_url resolved from Cloudinary, dynamically paint the live uploaded image asset
+    if (_cloudinarySecureUrl != null && _cloudinarySecureUrl!.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            _cloudinarySecureUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.broken_image_outlined, color: Colors.redAccent, size: 40),
+                  const SizedBox(height: 8),
+                  const Text('Failed to load Cloudinary asset', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                ],
+              );
+            },
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
+                  color: const Color(0xFFE11D48),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            bottom: 8,
+            right: 8,
+            child: _buildValidationBadge('Cloudinary CDN Asset Live ⚡'),
+          ),
+        ],
+      );
+    }
+
+    // 2. Fallback to local file if Cloudinary URL is not yet present (or offline upload error)
     if (_capturedImage != null) {
       return Stack(
         fit: StackFit.expand,
@@ -481,13 +683,13 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
           Positioned(
             bottom: 8,
             right: 8,
-            child: _buildValidationBadge('Device Media Validated (${_capturedImage!.name})'),
+            child: _buildValidationBadge('Local Device Media (${_capturedImage!.name})'),
           ),
         ],
       );
     }
 
-    // 2. Check demo mock image (if auto-filled via wand button)
+    // 3. Check demo mock image (if auto-filled via wand button)
     if (_demoImageUrl != null && _demoImageUrl!.isNotEmpty) {
       return Stack(
         fit: StackFit.expand,
@@ -527,19 +729,19 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       );
     }
 
-    // 3. Default empty state
+    // 4. Default empty state
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(Icons.add_a_photo_outlined, color: Colors.grey.shade700, size: 48),
         const SizedBox(height: 12),
         const Text(
-          'No Image Captured',
-          style: TextStyle(color: Color(0xFF71717A), fontSize: 14, fontWeight: FontWeight.w600),
+          'Tap Box to Select Hazard Media',
+          style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 15, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 4),
         const Text(
-          'Tap "Take Photo" or "Device Gallery" above to capture hazard media',
+          'Choose between real-time camera capture or device gallery',
           style: TextStyle(color: Color(0xFF52525B), fontSize: 12),
         ),
       ],
