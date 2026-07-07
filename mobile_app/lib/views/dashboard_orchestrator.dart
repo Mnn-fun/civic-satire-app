@@ -63,11 +63,15 @@ class GovernmentEntityView extends ConsumerWidget {
         elevation: 0,
         title: const Row(
           children: [
-            Icon(Icons.account_balance_rounded, color: Colors.blueAccent, size: 22),
-            SizedBox(width: 10),
-            Text(
-              'MUNICIPAL INFRASTRUCTURE MONITOR',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5),
+            Icon(Icons.account_balance_rounded, color: Colors.blueAccent, size: 20),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'MUNICIPAL INFRASTRUCTURE MONITOR',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5),
+              ),
             ),
           ],
         ),
@@ -132,18 +136,26 @@ class GovernmentEntityView extends ConsumerWidget {
 
   Widget _buildAnalyticalTelemetryHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
         color: Color(0xFF18181B),
         border: Border(bottom: BorderSide(color: Color(0xFF27272A), width: 1.5)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          _buildTelemetryMetric('OPEN CASELOAD', '15 ACTIVE', Colors.amberAccent),
-          _buildTelemetryMetric('AVG DISPATCH SPEED', '4.2 HOURS', Colors.greenAccent),
-          _buildTelemetryMetric('AI SEVERITY INDEX', 'TIER 1 CRITICAL', const Color(0xFFE11D48)),
-          _buildTelemetryMetric('MEME OVERLAYS', 'SUPPRESSED / HIDDEN', Colors.grey),
+          Row(
+            children: [
+              Expanded(child: _buildTelemetryMetric('OPEN CASELOAD', '15 ACTIVE', Colors.amberAccent)),
+              Expanded(child: _buildTelemetryMetric('AVG DISPATCH SPEED', '4.2 HOURS', Colors.greenAccent)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildTelemetryMetric('AI SEVERITY INDEX', 'TIER 1 CRITICAL', const Color(0xFFE11D48))),
+              Expanded(child: _buildTelemetryMetric('MEME OVERLAYS', 'SUPPRESSED / HIDDEN', Colors.grey)),
+            ],
+          ),
         ],
       ),
     );
@@ -365,9 +377,16 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
         elevation: 0,
         title: const Row(
           children: [
-            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFE11D48), size: 24),
-            SizedBox(width: 10),
-            Text('ELITE ADMIN COMMAND ROOM', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.8)),
+            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFE11D48), size: 22),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'ELITE ADMIN COMMAND ROOM',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.8),
+              ),
+            ),
           ],
         ),
         actions: [

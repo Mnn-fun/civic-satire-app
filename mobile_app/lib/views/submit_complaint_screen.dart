@@ -2,6 +2,7 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_app/services/cloudinary_service.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/services/image_picker_service.dart';
 
@@ -17,9 +18,9 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _rtoCodeController = TextEditingController();
-  final _imageUrlController = TextEditingController();
 
   XFile? _capturedImage;
+  String? _demoImageUrl;
   bool _isSubmitting = false;
 
   @override
@@ -27,7 +28,6 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _rtoCodeController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
   }
 
@@ -37,7 +37,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       _titleController.text = 'Massive Crater on SG Highway';
       _descriptionController.text = 'Unfinished drainage trench left wide open across all 3 fast lanes without reflective warning signs or barricades during monsoon commute.';
       _rtoCodeController.text = 'GJ-01';
-      _imageUrlController.text = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80';
+      _demoImageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80';
       _capturedImage = null;
     });
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -60,35 +60,76 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
 
   /// Launches native camera or gallery selection using ImagePickerService
   Future<void> _pickMedia(bool fromCamera) async {
-    final file = await ref.read(imagePickerServiceProvider).pickImage(fromCamera);
-    if (file != null) {
-      setState(() {
-        _capturedImage = file;
-        _imageUrlController.clear(); // Clear URL fallback when native file is picked
-      });
+    try {
+      final file = await ref.read(imagePickerServiceProvider).pickImage(fromCamera);
+      if (!mounted) return;
+      if (file != null) {
+        setState(() {
+          _capturedImage = file;
+          _demoImageUrl = null; // Clear demo mock when native media is selected
+        });
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(fromCamera ? Icons.camera_alt : Icons.photo_library, color: Colors.greenAccent, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Media captured from ${fromCamera ? "Camera" : "Device Gallery"}: ${file.name}',
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF18181B),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFF3F3F46)),
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.amberAccent, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'No photo selected or picker cancelled.\nIMPORTANT: If the picker did not open, stop terminal and restart "flutter run" so native Android plugins get compiled!',
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF27272A),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE11D48)),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(fromCamera ? Icons.camera_alt : Icons.photo_library, color: Colors.greenAccent, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Media captured from ${fromCamera ? "Camera" : "Device Gallery"}: ${file.name}',
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
-                ),
-              ),
-            ],
+          content: Text(
+            'Native Plugin Error: $e.\nPlease STOP your terminal process and run "flutter run" again to compile native Android plugins!',
+            style: const TextStyle(color: Colors.white, fontSize: 13),
           ),
-          backgroundColor: const Color(0xFF18181B),
-          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.red.shade800,
+          duration: const Duration(seconds: 6),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Color(0xFF3F3F46)),
-          ),
         ),
       );
     }
@@ -100,11 +141,11 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       return;
     }
 
-    final finalImage = _capturedImage != null ? _capturedImage!.path : _imageUrlController.text.trim();
+    String finalImage = _capturedImage != null ? _capturedImage!.path : (_demoImageUrl ?? '');
     if (finalImage.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please capture a photo from Camera/Gallery or enter an image URL.', style: TextStyle(color: Colors.white)),
+          content: const Text('Please capture a photo from Camera or Device Gallery.', style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
         ),
@@ -150,6 +191,16 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
     setState(() {
       _isSubmitting = true;
     });
+
+    // If native media picked, upload directly to Cloudinary to get secure_url before broadcasting
+    if (_capturedImage != null) {
+      try {
+        final secureUrl = await ref.read(cloudinaryServiceProvider).uploadToCloudinary(_capturedImage!);
+        finalImage = secureUrl;
+      } catch (e) {
+        debugPrint('[Cloudinary Fallback] Upload error: $e. Using local path fallback.');
+      }
+    }
 
     final success = await ref.read(feedNotifierProvider.notifier).submitComplaint(
           title: _titleController.text.trim(),
@@ -322,28 +373,6 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
-                // Optional Demo URL Field
-                _buildSectionLabel('Optional Fallback URL (for Unsplash / Demo testing)'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _imageUrlController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: _buildInputDecoration(
-                    hintText: 'https://images.unsplash.com/... (optional)',
-                    prefixIcon: Icons.link_rounded,
-                  ),
-                  onChanged: (val) {
-                    if (val.isNotEmpty && _capturedImage != null) {
-                      setState(() {
-                        _capturedImage = null; // Prioritize URL if user types/pastes URL
-                      });
-                    } else {
-                      setState(() {});
-                    }
-                  },
-                ),
                 const SizedBox(height: 24),
 
                 // High-visibility Image Preview Box
@@ -458,14 +487,13 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       );
     }
 
-    // 2. Check fallback URL text field
-    final url = _imageUrlController.text.trim();
-    if (url.isNotEmpty) {
+    // 2. Check demo mock image (if auto-filled via wand button)
+    if (_demoImageUrl != null && _demoImageUrl!.isNotEmpty) {
       return Stack(
         fit: StackFit.expand,
         children: [
           Image.network(
-            url,
+            _demoImageUrl!,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               return Column(
@@ -473,8 +501,8 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                 children: [
                   const Icon(Icons.broken_image_outlined, color: Colors.redAccent, size: 40),
                   const SizedBox(height: 8),
-                  const Text('Failed to load image URL', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
-                  Text(url, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
+                  const Text('Failed to load demo image', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  Text(_demoImageUrl!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF71717A), fontSize: 11)),
                 ],
               );
             },
@@ -493,7 +521,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
           Positioned(
             bottom: 8,
             right: 8,
-            child: _buildValidationBadge('Cloud URL Validated'),
+            child: _buildValidationBadge('Pitch Mock Media Loaded'),
           ),
         ],
       );
