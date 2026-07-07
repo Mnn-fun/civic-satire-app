@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/theme/app_theme.dart';
-import 'package:mobile_app/views/national_feed_screen.dart';
+import 'package:mobile_app/views/login_screen.dart';
 
 void main() {
   runApp(
@@ -24,8 +24,8 @@ class CivicSatireApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,
-      // Clean routing to the initial screen
-      home: const NationalFeedScreen(),
+      // Clean routing to the role-selection login screen
+      home: const LoginScreen(),
     );
   }
 }
