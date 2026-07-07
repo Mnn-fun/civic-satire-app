@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/views/complaint_card.dart';
+import 'package:mobile_app/views/submit_complaint_screen.dart';
 
 class NationalFeedScreen extends ConsumerStatefulWidget {
   const NationalFeedScreen({super.key});
@@ -236,7 +237,11 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const SubmitComplaintScreen()),
+          );
+        },
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         icon: const Icon(Icons.add_a_photo_outlined),
