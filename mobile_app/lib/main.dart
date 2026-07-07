@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/theme/app_theme.dart';
-import 'package:mobile_app/views/login_screen.dart';
+import 'package:mobile_app/views/gateway_login_screen.dart';
 
 void main() {
   runApp(
@@ -25,7 +25,7 @@ class CivicSatireApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,
       // Clean routing to the role-selection login screen
-      home: const LoginScreen(),
+      home: const GatewayLoginScreen(),
     );
   }
 }

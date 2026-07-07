@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/complaint.dart';
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
-import 'package:mobile_app/views/login_screen.dart';
+import 'package:mobile_app/views/gateway_login_screen.dart';
 import 'package:mobile_app/views/national_feed_screen.dart';
 
 /// Core systems structural routing controller watching Riverpod auth state
@@ -14,9 +14,9 @@ class DashboardOrchestrator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
 
-    // 1. Guard check: if unauthenticated, render LoginScreen gateway
+    // 1. Guard check: if unauthenticated, render GatewayLoginScreen
     if (!authState.isAuthenticated || authState.role == null) {
-      return const LoginScreen();
+      return const GatewayLoginScreen();
     }
 
     // 2. Standard switch statement checking active role context
