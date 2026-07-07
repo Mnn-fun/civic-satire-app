@@ -108,7 +108,6 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
   Widget build(BuildContext context) {
     final feedAsyncValue = ref.watch(feedNotifierProvider);
     final isSatireMode = ref.watch(isSatireModeProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -242,10 +241,21 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
             MaterialPageRoute(builder: (context) => const SubmitComplaintScreen()),
           );
         },
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        icon: const Icon(Icons.add_a_photo_outlined),
-        label: const Text('Report Issue', style: TextStyle(fontWeight: FontWeight.w700)),
+        backgroundColor: const Color(0xFF27272A), // Corporate dull gray (zinc-800)
+        foregroundColor: const Color(0xFFFAFAFA), // Crisp white text and icon
+        elevation: 4,
+        highlightElevation: 6,
+        extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
+        extendedIconLabelSpacing: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+          side: const BorderSide(color: Color(0xFF52525B), width: 1.2), // Corporate neutral gray border
+        ),
+        icon: const Icon(Icons.add_circle_outline_rounded, size: 22, color: Color(0xFFE4E4E7)),
+        label: const Text(
+          'Report Issue',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, letterSpacing: 0.5),
+        ),
       ),
     );
   }
