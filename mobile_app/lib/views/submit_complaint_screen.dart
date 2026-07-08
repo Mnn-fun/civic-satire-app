@@ -56,6 +56,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
   XFile? _capturedImage;
   String? _demoImageUrl;
   String? _cloudinarySecureUrl;
+  bool isUploading = false;
   bool _isUploadingToCloudinary = false;
   bool _isSubmitting = false;
 
@@ -73,9 +74,10 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       _titleController.text = 'Massive Crater on SG Highway';
       _descriptionController.text = 'Unfinished drainage trench left wide open across all 3 fast lanes without reflective warning signs or barricades during monsoon commute.';
       _rtoCodeController.text = 'GJ-01';
-      _demoImageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80';
+      _demoImageUrl = 'https://images.unsplash.com/photo-1584463603413-5a0eb322fef1?auto=format&fit=crop&w=800&q=80';
       _capturedImage = null;
       _cloudinarySecureUrl = null;
+      isUploading = false;
       _isUploadingToCloudinary = false;
     });
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -215,10 +217,11 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       }
 
       setState(() {
+        isUploading = true;
+        _isUploadingToCloudinary = true;
         _capturedImage = file;
         _demoImageUrl = null;
         _cloudinarySecureUrl = null;
-        _isUploadingToCloudinary = true;
       });
 
       final cloudinaryService = ref.read(cloudinaryServiceProvider);
@@ -227,8 +230,9 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
       if (!mounted) return;
 
       setState(() {
-        _cloudinarySecureUrl = secureUrl;
+        isUploading = false;
         _isUploadingToCloudinary = false;
+        _cloudinarySecureUrl = secureUrl;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -249,6 +253,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
+        isUploading = false;
         _isUploadingToCloudinary = false;
       });
 
@@ -268,15 +273,21 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
 
     setState(() => _isSubmitting = true);
 
-    String targetImageUrl;
+    String? targetImageUrl;
     if (_cloudinarySecureUrl != null && _cloudinarySecureUrl!.isNotEmpty) {
       targetImageUrl = _cloudinarySecureUrl!;
-    } else if (_capturedImage != null) {
-      targetImageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80';
     } else if (_demoImageUrl != null && _demoImageUrl!.isNotEmpty) {
       targetImageUrl = _demoImageUrl!;
     } else {
-      targetImageUrl = 'https://images.unsplash.com/photo-1541888946425-d0ebb18086f6?auto=format&fit=crop&w=800&q=80';
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload an infrastructure hazard photo before submitting.'),
+          backgroundColor: Color(0xFFEA4335),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
 
     try {
@@ -409,7 +420,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                     const SizedBox(width: 8),
                     if (_capturedImage != null || _demoImageUrl != null)
                       GestureDetector(
-                        onTap: _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
+                        onTap: isUploading || _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
                         child: const Text(
                           'Change Photo',
                           style: TextStyle(color: Color(0xFF4285F4), fontSize: 12, fontWeight: FontWeight.bold),
@@ -418,9 +429,9 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Media attachment action block wrapped in implicit micro-scale animation (scale: 0.96 with Curves.easeOutCubic)
+                // Media attachment action block wrapped in implicit micro-scale animation
                 PremiumTouchCard(
-                  onTap: _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
+                  onTap: isUploading || _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
                   child: Container(
                     height: 230,
                     width: double.infinity,
@@ -442,7 +453,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
 
                 // Submit to Edge Agents Button (8dp rectangular boundary, translucent fill, sharp 1.5dp outline)
                 ElevatedButton(
-                  onPressed: _isSubmitting || _isUploadingToCloudinary ? null : _submitToEdgeAgents,
+                  onPressed: _isSubmitting || isUploading || _isUploadingToCloudinary ? null : _submitToEdgeAgents,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4285F4).withValues(alpha: 0.10),
                     disabledBackgroundColor: const Color(0xFFDEE3E8),
@@ -513,7 +524,7 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
   }
 
   Widget _buildImagePreviewContent() {
-    if (_isUploadingToCloudinary) {
+    if (isUploading || _isUploadingToCloudinary) {
       return Stack(
         fit: StackFit.expand,
         children: [
