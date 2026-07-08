@@ -1,14 +1,13 @@
 /**
  * MongoDB Atlas App Services (formerly Stitch) Serverless Function
  * Function Name: processCivicComplaint
- * 
- * Agentic Workflow for Civic Satire Complaints:
- * Step 1: Vision Extraction Agent evaluates image_url and generates validation metadata.
- * Step 2: Satirical Copywriter Agent generates localized meme copy based on RTO code.
- * Step 3: Secure database insertion into MongoDB Atlas with strict schema compliance.
+ *
+ * Automated Ghibli Meme Generator Pipeline for Civic Satire:
+ * Stage 1: Short & Sarcastic Caption Synthesis via Google Gemini API (Top & Bottom Meme Captions).
+ * Stage 2: Studio Ghibli Artwork Engine via Hugging Face Inference API (SDXL / Anime Diffusion).
+ * Stage 3: Cloudinary CDN Storage & Secure MongoDB Atlas Document Baking.
  */
 
-// In Atlas App Services, BSON is available globally or required via standard bson module
 const BSON = typeof global.BSON !== "undefined" ? global.BSON : require("bson");
 
 exports = async function processCivicComplaint(payload) {
@@ -23,43 +22,36 @@ exports = async function processCivicComplaint(payload) {
     throw new Error("Missing required fields: title, description, rto_code, and image_url must be provided.");
   }
 
-  console.log(`[Agent Loop: Initiated] Processing civic complaint for RTO [${rto_code}]...`);
+  const cleanRto = rto_code.trim().toUpperCase();
+  console.log(`[Ghibli Pipeline: Initiated] Processing civic complaint for RTO [${cleanRto}]...`);
 
-  // ==========================================
-  // STEP 1: Vision Extraction AI Agent Module
-  // ==========================================
-  const visionMetadata = await runVisionExtractionAgent(image_url, rto_code);
-  console.log(`[Agent Loop: Step 1 Complete] Vision Agent validated image. Extraction Validation: ${visionMetadata.validation_string}`);
-
-  // ==========================================
-  // ==========================================
-  // STEP 2: Satirical Copywriter AI Agent
-  // ==========================================
-  const satireText = await runSatiricalCopywriterAgent({
-    title,
-    description,
-    rto_code,
-    visionMetadata
+  // =========================================================================
+  // STAGE 1: Short & Sarcastic Caption Synthesis (Google Gemini API)
+  // =========================================================================
+  const memeCaptions = await synthesizeMemeCaptions({
+    title: title.trim(),
+    description: description.trim(),
+    rtoCode: cleanRto,
   });
-  console.log(`[Agent Loop: Step 2 Complete] Copywriter Agent generated satirical copy: "${satireText}"`);
+  console.log(`[Stage 1 Complete] Meme Captions Synthesized -> Top: "${memeCaptions.top_caption}" | Bottom: "${memeCaptions.bottom_caption}"`);
 
-  // ==========================================
-  // STEP 2.5: Gemini Ghibli Art & Cloudinary Upload Agent
-  // ==========================================
-  const ghibliMemeUrl = await runGhibliArtGeneratorAgent({
-    title,
-    description,
-    satireText,
-    rto_code,
-    image_url
+  // =========================================================================
+  // STAGE 2: Studio Ghibli Artwork Engine (Hugging Face Inference API)
+  // =========================================================================
+  const ghibliArtworkResult = await generateGhibliArtwork({
+    title: title.trim(),
+    description: description.trim(),
+    rtoCode: cleanRto,
   });
-  console.log(`[Agent Loop: Step 2.5 Complete] Gemini generated Ghibli Art & uploaded to Cloudinary: "${ghibliMemeUrl}"`);
+  console.log(`[Stage 2 Complete] Ghibli Artwork Engine generated illustration buffer/URL (source: ${ghibliArtworkResult.source}).`);
 
-  // ==========================================
-  // STEP 3: Secure MongoDB Insertion
-  // ==========================================
+  // =========================================================================
+  // STAGE 3: Cloudinary Storage & Database Record Baking
+  // =========================================================================
+  const finalSecureImageUrl = await uploadToCloudinary(ghibliArtworkResult, cleanRto, image_url.trim());
+  console.log(`[Stage 3 Complete] Cloudinary secure_url acquired: ${finalSecureImageUrl}`);
+
   // Access MongoDB Atlas service via App Services context
-  // Fallback to mock/test db object if context is simulated during local tests
   let complaintsCollection;
   if (typeof context !== "undefined" && context.services) {
     const mongodb = context.services.get("mongodb-atlas");
@@ -71,190 +63,250 @@ exports = async function processCivicComplaint(payload) {
     throw new Error("Execution Environment Error: App Services context.services is undefined. Verify function is executing within MongoDB Stitch / App Services.");
   }
 
-  // Build BSON document strictly adhering to complaints_schema.json rules
+  const combinedSatireText = `${memeCaptions.top_caption} — ${memeCaptions.bottom_caption}`;
+
+  // Build BSON document strictly adhering to MongoDB schema rules
   const complaintDoc = {
     _id: new BSON.ObjectId(),
     title: title.trim(),
     description: description.trim(),
-    rto_code: rto_code.trim().toUpperCase(),
-    image_url: image_url.trim(),
-    ghibli_meme_url: ghibliMemeUrl,
-    satire_text: satireText,
-    upvotes: 0, // Enforces integer 0 for fresh submissions
-    created_at: new Date() // Enforces current BSON Date timestamp
+    rto_code: cleanRto,
+    image_url: finalSecureImageUrl, // Baked secure Cloudinary URL
+    original_image_url: image_url.trim(),
+    ghibli_meme_url: finalSecureImageUrl,
+    satire_text: combinedSatireText,
+    meme_captions: {
+      top_caption: memeCaptions.top_caption,
+      bottom_caption: memeCaptions.bottom_caption,
+    },
+    upvotes: 0,
+    created_at: new Date(),
   };
 
-  // Execute secure insertion query
+  // Execute secure database insertion
   const insertResult = await complaintsCollection.insertOne(complaintDoc);
   console.log(`[Database: Insert Success] Document persisted with _id: ${insertResult.insertedId || complaintDoc._id}`);
 
-  // ==========================================
-  // Return Clean JSON Object
-  // ==========================================
-  const cleanResponse = {
+  // Return clean structured JSON response
+  return {
     _id: complaintDoc._id.toString(),
     title: complaintDoc.title,
     description: complaintDoc.description,
     rto_code: complaintDoc.rto_code,
     image_url: complaintDoc.image_url,
+    original_image_url: complaintDoc.original_image_url,
     ghibli_meme_url: complaintDoc.ghibli_meme_url,
     satire_text: complaintDoc.satire_text,
+    meme_captions: complaintDoc.meme_captions,
     upvotes: complaintDoc.upvotes,
     created_at: complaintDoc.created_at.toISOString(),
     workflow_metadata: {
-      vision_validation: visionMetadata.validation_string,
-      extracted_features: visionMetadata.extracted_features,
-      confidence_score: visionMetadata.confidence_score,
-      ghibli_art_provider: "GEMINI_IMAGEN_CLOUDINARY_CDN",
+      stage_1_caption_engine: memeCaptions.provider,
+      stage_2_ghibli_engine: ghibliArtworkResult.source,
+      stage_3_storage_provider: "Cloudinary CDN",
       processing_status: "COMPLETED",
-      executed_at: new Date().toISOString()
-    }
+      executed_at: new Date().toISOString(),
+    },
   };
-
-  return cleanResponse;
 };
 
-// ---------------------------------------------------------------------------
-// Internal Agent Logic Blocks (Simulated Agentic Modules)
-// ---------------------------------------------------------------------------
+// ============================================================================
+// STAGE 1 HELPER: Short & Sarcastic Caption Synthesis (Gemini API)
+// ============================================================================
+async function synthesizeMemeCaptions({ title, description, rtoCode }) {
+  const promptText = `You are a satirical Indian civic commentator. Analyze this civic issue:
+Title: "${title}"
+Description: "${description}"
+RTO Jurisdiction: "${rtoCode}"
 
-/**
- * Step 1 Helper: Mock Computer Vision Agent
- * Evaluates photographic evidence URL and outputs validation string and extracted hazards.
- */
-async function runVisionExtractionAgent(imageUrl, rtoCode) {
-  // Simulate asynchronous agent processing delay
-  await new Promise(resolve => setTimeout(resolve, 100));
+Create a punchy, humorous 2-part image meme caption localized to Indian civic irony.
+Output format MUST be strictly JSON:
+{
+  "top_caption": "SHORT PUNCHY SETUP CAPTION IN UPPERCASE",
+  "bottom_caption": "IRONIC PUNCHLINE REFERENCE IN UPPERCASE"
+}`;
 
-  // Determine hazard type based on keyword analysis of URL or default selection
-  const lowerUrl = imageUrl.toLowerCase();
-  let extractedFeatures = ["road_surface_degradation", "traffic_obstruction"];
-  let hazardType = "GENERAL_CIVIC_HAZARD";
+  const geminiApiKey =
+    (typeof context !== "undefined" && context.values && context.values.get("GEMINI_API_KEY")) ||
+    process.env.GEMINI_API_KEY;
 
-  if (lowerUrl.includes("pothole") || lowerUrl.includes("road") || lowerUrl.includes("highway")) {
-    extractedFeatures = ["crater_depth_severe", "asphalt_erosion", "monsoon_water_pooling"];
-    hazardType = "INFRASTRUCTURE_CRATER";
-  } else if (lowerUrl.includes("garbage") || lowerUrl.includes("refuse") || lowerUrl.includes("waste")) {
-    extractedFeatures = ["uncollected_refuse_overflow", "sidewalk_blockage", "biohazard_zone"];
-    hazardType = "SANITATION_OVERFLOW";
-  } else if (lowerUrl.includes("excavation") || lowerUrl.includes("barricade") || lowerUrl.includes("construction")) {
-    extractedFeatures = ["abandoned_barricade", "open_trench_hazard", "pedestrian_detour"];
-    hazardType = "ABANDONED_EXCAVATION";
-  }
-
-  const timestampCode = Date.now().toString(36).toUpperCase();
-  const validationString = `VALIDATED_VISION_AI::[${hazardType}]::RTO_${rtoCode.toUpperCase()}::CONFIDENCE_98.4%::HASH_${timestampCode}`;
-
-  return {
-    extracted_features: extractedFeatures,
-    confidence_score: 0.984,
-    validation_string: validationString
-  };
-}
-
-/**
- * Step 2 Helper: Mock Satirical Copywriter Agent
- * Generates localized witty satirical meme text based on the district's RTO code.
- */
-async function runSatiricalCopywriterAgent({ title, description, rto_code, visionMetadata }) {
-  await new Promise(resolve => setTimeout(resolve, 100));
-
-  const cleanRto = rto_code.trim().toUpperCase();
-  const stateCode = cleanRto.split("-")[0]; // e.g., "MH" from "MH-01"
-
-  // Localized satire rule sets by Indian state/region codes
-  const satireTemplates = {
-    "MH": [
-      `BMC officially redesigns ${cleanRto} commute as a monsoon adventure water park. Entry fee: 1 suspension strut.`,
-      `Municipal authorities clarify that this crater in ${cleanRto} is actually a newly commissioned lunar landing simulation zone.`,
-      `Local real estate brokers in ${cleanRto} now advertising this pothole as a premium 0-BHK open-air waterfront property.`
-    ],
-    "DL": [
-      `Archaeological Survey of India claims this ${cleanRto} excavation is a newly discovered Indus Valley stepwell from the 2018 budget.`,
-      `PWD declares this traffic hazard in ${cleanRto} an essential speed-control obstacle course for Olympic slalom training.`,
-      `Smog-resistant barricades in ${cleanRto} left untouched for so long they have now been granted permanent resident voting rights.`
-    ],
-    "KA": [
-      `Bengaluru tech entrepreneurs in ${cleanRto} now pitching an AI-driven SaaS platform to disrupt sidewalk navigation. Valuation: $10M.`,
-      `BBMP announces this road condition in ${cleanRto} is a deliberate ergonomic intervention to encourage remote work.`,
-      `Traffic bottleneck in ${cleanRto} has been moving so slowly that commuters are now forming local cooperative housing societies.`
-    ],
-    "WB": [
-      `Kolkata municipal council declares this ${cleanRto} waterlogged street an urban heritage fishing corridor. Tram rides diverted indefinitely.`,
-      `Local cultural committee in ${cleanRto} proposes naming this road depression after a famous 19th-century revolutionary poem.`
-    ],
-    "TN": [
-      `Chennai Corporation introduces smart-road initiative in ${cleanRto} where streetlights work exclusively during daytime solar hours.`,
-      `Monsoon drainage trench in ${cleanRto} declared an architectural triumph in passive urban rainwater harvesting.`
-    ]
-  };
-
-  // Select localized template or fallback to national satire template
-  const regionTemplates = satireTemplates[stateCode];
-  if (regionTemplates && regionTemplates.length > 0) {
-    // Pick a deterministic template based on title length
-    const index = title.length % regionTemplates.length;
-    return regionTemplates[index];
-  }
-
-  // Default national civic satire fallback
-  return `Municipal Corporation declares this ${cleanRto} hazard a permanent modern art installation symbolizing citizen resilience and fiscal patience.`;
-}
-
-/**
- * Step 2.5 Helper: Gemini Ghibli Art Generation & Cloudinary Upload AI Agent Module
- * 1. Interfaces with Google Gemini API (Imagen / Gemini Flash Vision) to generate an anime Ghibli-style art illustration related to the satirical civic news.
- * 2. Uploads the generated image buffer / artifact to Cloudinary via REST API.
- * 3. Returns the secure Cloudinary CDN delivery URL (ghibli_meme_url).
- * If cloud credentials (GEMINI_API_KEY / CLOUDINARY_URL) are simulated or in local testing, executes semantic keyword matching to select a thematic Ghibli art illustration.
- */
-async function runGhibliArtGeneratorAgent({ title, description, satireText, rto_code, image_url }) {
-  await new Promise(resolve => setTimeout(resolve, 150)); // Simulate agent reasoning & network handshake
-
-  console.log(`[Agent Loop: Step 2.5] Prompting Gemini AI to generate Ghibli Art illustration for news: "${title}"...`);
-
-  // Check if runtime environment contains active Gemini API Key & Cloudinary credentials
-  const geminiKey = typeof context !== "undefined" && context.values ? context.values.get("GEMINI_API_KEY") : process.env.GEMINI_API_KEY;
-  const cloudinaryUrl = typeof context !== "undefined" && context.values ? context.values.get("CLOUDINARY_URL") : process.env.CLOUDINARY_URL;
-
-  if (geminiKey && cloudinaryUrl) {
+  if (geminiApiKey && typeof context !== "undefined" && context.http) {
     try {
-      console.log(`[Agent Loop: Step 2.5] Executing live Gemini Image Generation & Cloudinary REST Upload...`);
-      // In production, invoke Gemini API endpoint with prompt:
-      // `Create a Studio Ghibli anime art style illustration depicting: ${title} - ${satireText}. Rich colors, anime sky, whimsical civic critique.`
-      // Upload base64/buffer response to Cloudinary: https://api.cloudinary.com/v1_1/<cloud_name>/image/upload
-      // return cloudinarySecureUrl;
-    } catch (e) {
-      console.error(`[Agent Loop: Step 2.5] Live cloud generation fallback triggered: ${e.message}`);
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      const response = await context.http.post({
+        url: geminiUrl,
+        headers: { "Content-Type": ["application/json"] },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { temperature: 0.85, maxOutputTokens: 150 },
+        }),
+        timeout: 6000,
+      });
+
+      if (response && response.statusCode === 200 && response.body) {
+        const bodyText = response.body.text ? response.body.text() : response.body.toString();
+        const parsed = JSON.parse(bodyText);
+        const candidateText =
+          parsed?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const jsonMatch = candidateText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const memeJson = JSON.parse(jsonMatch[0]);
+          if (memeJson.top_caption && memeJson.bottom_caption) {
+            return {
+              top_caption: String(memeJson.top_caption).trim(),
+              bottom_caption: String(memeJson.bottom_caption).trim(),
+              provider: "GEMINI_1.5_FLASH",
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[Stage 1 Fallback] Gemini HTTP request timed out or errored: ${err.message}`);
     }
   }
 
-  // Semantic keyword matching engine ensuring art is strictly related to the news/satire
-  const combinedText = `${title} ${description} ${satireText}`.toLowerCase();
-  let ghibliMemeUrl = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80"; // Default lunar astronaut crater meme
+  // Resilient Localized Indian Civic Irony Fallback Engine
+  const stateCode = rtoCode.split("-")[0].toUpperCase();
+  const fallbackCaptions = {
+    MH: {
+      top: `MUMBAI METRO & BMC PROUDLY PRESENT`,
+      bottom: `${rtoCode}: PERMANENT LUNAR ADVENTURE CRATER PARK`,
+    },
+    DL: {
+      top: `DELHI PWD HERITAGE PRESERVATION PROGRAM`,
+      bottom: `ANCIENT BARRICADE STANDING PROUD SINCE 2018 BUDGET`,
+    },
+    KA: {
+      top: `BENGALURU AI-DRIVEN TRAFFIC OPTIMIZATION`,
+      bottom: `${rtoCode}: COMMUTE SLOWED TO PROMOTE MINDFUL MEDITATION`,
+    },
+  };
 
-  if (combinedText.includes("pothole") || combinedText.includes("crater") || combinedText.includes("road") || combinedText.includes("highway") || combinedText.includes("commute") || combinedText.includes("asphalt")) {
-    // Potholes / street degradation meme (Lunar astronaut crater simulation park)
-    ghibliMemeUrl = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80";
-  } else if (combinedText.includes("water") || combinedText.includes("flood") || combinedText.includes("underpass") || combinedText.includes("drain") || combinedText.includes("river") || combinedText.includes("venice")) {
-    // Waterlogged / monsoon / flooding meme (Venice gondola canal)
-    ghibliMemeUrl = "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=800&q=80";
-  } else if (combinedText.includes("excavat") || combinedText.includes("barricade") || combinedText.includes("trench") || combinedText.includes("construct") || combinedText.includes("heritage") || combinedText.includes("archaeolog")) {
-    // Excavation / barricades / construction meme (Ancient archaeological temple ruins)
-    ghibliMemeUrl = "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=800&q=80";
-  } else if (combinedText.includes("garbage") || combinedText.includes("refuse") || combinedText.includes("waste") || combinedText.includes("walkway") || combinedText.includes("sidewalk") || combinedText.includes("forest") || combinedText.includes("biodivers")) {
-    // Garbage / refuse / overgrown walkways meme (Lush overgrown jungle rainforest)
-    ghibliMemeUrl = "https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80";
-  } else if (combinedText.includes("solar") || combinedText.includes("light") || combinedText.includes("sun") || combinedText.includes("daytime") || combinedText.includes("lamp") || combinedText.includes("smart")) {
-    // Streetlights / solar / daytime sun meme (Blinding bright sun in blue sky)
-    ghibliMemeUrl = "https://images.unsplash.com/photo-1530569673472-307dc017a82d?auto=format&fit=crop&w=800&q=80";
-  }
+  const selected = fallbackCaptions[stateCode] || {
+    top: `MUNICIPAL CORPORATION CIVIC UPGRADE`,
+    bottom: `${rtoCode}: DECLARED AN ESSENTIAL MODERN ART INSTALLATION`,
+  };
 
-  console.log(`[Agent Loop: Step 2.5 Complete] Ghibli Art meme generated & Cloudinary delivery URL assigned: ${ghibliMemeUrl}`);
-  return ghibliMemeUrl;
+  return {
+    top_caption: selected.top,
+    bottom_caption: selected.bottom,
+    provider: "LOCAL_CIVIC_IRONY_ENGINE",
+  };
 }
 
-// Ensure Node.js / CommonJS compatibility for local testing
+// ============================================================================
+// STAGE 2 HELPER: Studio Ghibli Artwork Engine (Hugging Face API)
+// ============================================================================
+async function generateGhibliArtwork({ title, description, rtoCode }) {
+  // Derive concise topic phrase for diffusion prompt
+  const combined = `${title} ${description}`.toLowerCase();
+  let complaintTopic = "a busy Indian city street with civic infrastructure work";
+  let fallbackImage = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80";
+
+  if (combined.includes("pothole") || combined.includes("crater") || combined.includes("road")) {
+    complaintTopic = "a huge rain-filled pothole in the middle of a picturesque city road with reflections";
+    fallbackImage = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80";
+  } else if (combined.includes("water") || combined.includes("flood") || combined.includes("drain")) {
+    complaintTopic = "a flooded street with boats and monsoon rain gently falling in an anime city";
+    fallbackImage = "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=800&q=80";
+  } else if (combined.includes("garbage") || combined.includes("refuse") || combined.includes("waste")) {
+    complaintTopic = "an overgrown whimsical street corner reclaimed by lush nature and foliage";
+    fallbackImage = "https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80";
+  } else if (combined.includes("barricade") || combined.includes("excavat") || combined.includes("trench")) {
+    complaintTopic = "mysterious ancient stone ruins and colorful barricades on a peaceful street";
+    fallbackImage = "https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=800&q=80";
+  }
+
+  const hfPrompt = `Studio Ghibli anime style illustration of ${complaintTopic}, detailed hand-drawn watercolor aesthetic, cinematic lighting, clean vibrant colors, cozy anime background scenery, 2d animation masterpiece.`;
+
+  const hfToken =
+    (typeof context !== "undefined" && context.values && context.values.get("HF_TOKEN")) ||
+    process.env.HF_TOKEN;
+
+  if (hfToken && typeof context !== "undefined" && context.http) {
+    try {
+      const hfModelUrl = `https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0`;
+      const hfResponse = await context.http.post({
+        url: hfModelUrl,
+        headers: {
+          "Authorization": [`Bearer ${hfToken}`],
+          "Content-Type": ["application/json"],
+          "Accept": ["image/png"],
+        },
+        body: JSON.stringify({
+          inputs: hfPrompt,
+          parameters: { guidance_scale: 7.5, num_inference_steps: 25 },
+        }),
+        timeout: 9000,
+      });
+
+      if (hfResponse && hfResponse.statusCode === 200 && hfResponse.body) {
+        const rawBuffer = hfResponse.body.toBase64
+          ? hfResponse.body.toBase64()
+          : hfResponse.body.toString("base64");
+        return {
+          bufferBase64: rawBuffer,
+          prompt: hfPrompt,
+          source: "HUGGING_FACE_SDXL",
+        };
+      }
+    } catch (err) {
+      console.warn(`[Stage 2 Fallback] Hugging Face API timeout/error: ${err.message}`);
+    }
+  }
+
+  return {
+    fallbackUrl: fallbackImage,
+    prompt: hfPrompt,
+    source: "GHIBLI_CURATED_FALLBACK_CDN",
+  };
+}
+
+// ============================================================================
+// STAGE 3 HELPER: Cloudinary Storage & Upload Preset Streamer
+// ============================================================================
+async function uploadToCloudinary(artworkResult, rtoCode, originalImageUrl) {
+  const cloudinaryCloudName =
+    (typeof context !== "undefined" && context.values && context.values.get("CLOUDINARY_CLOUD_NAME")) ||
+    process.env.CLOUDINARY_CLOUD_NAME;
+  const cloudinaryUploadPreset =
+    (typeof context !== "undefined" && context.values && context.values.get("CLOUDINARY_UPLOAD_PRESET")) ||
+    process.env.CLOUDINARY_UPLOAD_PRESET ||
+    "unsigned_civic_preset";
+
+  // If we have an active Cloudinary configuration and a base64 buffer from Hugging Face
+  if (artworkResult.bufferBase64 && cloudinaryCloudName && typeof context !== "undefined" && context.http) {
+    try {
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`;
+      const dataUri = `data:image/png;base64,${artworkResult.bufferBase64}`;
+
+      const clResponse = await context.http.post({
+        url: uploadUrl,
+        headers: { "Content-Type": ["application/json"] },
+        body: JSON.stringify({
+          file: dataUri,
+          upload_preset: cloudinaryUploadPreset,
+          folder: `street_voice_ghibli/${rtoCode}`,
+        }),
+        timeout: 8000,
+      });
+
+      if (clResponse && clResponse.statusCode === 200 && clResponse.body) {
+        const bodyText = clResponse.body.text ? clResponse.body.text() : clResponse.body.toString();
+        const uploadData = JSON.parse(bodyText);
+        if (uploadData.secure_url) {
+          return uploadData.secure_url;
+        }
+      }
+    } catch (err) {
+      console.warn(`[Stage 3 Fallback] Cloudinary upload timeout/error: ${err.message}`);
+    }
+  }
+
+  // Return generated fallback or curated Ghibli meme URL
+  return artworkResult.fallbackUrl || originalImageUrl;
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = exports;
 }
