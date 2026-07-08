@@ -33,21 +33,7 @@ Traditional civic complaint portals suffer from severe citizen apathy, opaque pr
 
 Our backend orchestrates a decoupled, serverless **Two-Tier Agentic Loop** inside MongoDB App Services (Stitch). Every incoming civic payload is evaluated, classified, and augmented before being committed to persistent storage.
 
-```mermaid
-graph TD
-    A["📱 Flutter Mobile Client"] -->|POST /api/complaints| B["🛡️ Serverless HTTP Ingress Wrapper"]
-    B -->|Validated JSON Body| C["⚡ Stitch Function: processCivicComplaint"]
     
-    subgraph "Two-Tier Autonomous Agent Pipeline"
-        C -->|Step 1: Raw Image & RTO Code| D["👁️ Agent Tier 1: Civic Verification Specialist"]
-        D -->|Extraction Validation & Confidence Score| E["✍️ Agent Tier 2: Satirical Content Copywriter"]
-        E -->|Localized Regional Humor Layer| F["📦 Finalized BSON Record Assembly"]
-    </subgraph>
-    
-    F -->|Secure insertOne| G["🗄️ MongoDB Atlas: complaints Collection"]
-    G -->|D1 Projection / JSON Array| A
-```
-
 ### 👁️ Agent Tier 1: The Civic Verification Specialist
 * **Role:** Independent infrastructure inspection and structural damage validation.
 * **Mechanics:** Analyzes the photographic evidence (`image_url`) and regional jurisdiction (`rto_code`) to extract localized physical hazards (e.g., `crater_depth_severe`, `asphalt_erosion`, `abandoned_barricade`).
