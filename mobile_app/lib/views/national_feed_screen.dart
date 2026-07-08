@@ -235,7 +235,7 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
   String _getAppBarTitle() {
     switch (_selectedNavIndex) {
       case 1:
-        return 'Reported Issues';
+        return 'My Reported History';
       case 2:
         return 'Citizen Account';
       case 0:

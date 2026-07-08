@@ -268,7 +268,16 @@ async function generateGhibliArtwork({ title, description, rtoCode }) {
 async function uploadToCloudinary(artworkResult, rtoCode, originalImageUrl) {
   const cloudinaryCloudName =
     (typeof context !== "undefined" && context.values && context.values.get("CLOUDINARY_CLOUD_NAME")) ||
-    process.env.CLOUDINARY_CLOUD_NAME;
+    process.env.CLOUDINARY_CLOUD_NAME ||
+    "demo";
+  const cloudinaryApiKey =
+    (typeof context !== "undefined" && context.values && context.values.get("CLOUDINARY_API_KEY")) ||
+    process.env.CLOUDINARY_API_KEY ||
+    "126877514882186";
+  const cloudinaryApiSecret =
+    (typeof context !== "undefined" && context.values && context.values.get("CLOUDINARY_API_SECRET")) ||
+    process.env.CLOUDINARY_API_SECRET ||
+    "ZQh6Zdmje53mbp_iFEdrAxx7sbo";
   const cloudinaryUploadPreset =
     (typeof context !== "undefined" && context.values && context.values.get("CLOUDINARY_UPLOAD_PRESET")) ||
     process.env.CLOUDINARY_UPLOAD_PRESET ||

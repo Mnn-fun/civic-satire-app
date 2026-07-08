@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/complaint.dart';
@@ -154,7 +155,7 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
                     );
                   },
                   firstChild: _buildNormalImageView(constraints),
-                  secondChild: _buildMacroMemeLayer(constraints),
+                  secondChild: _buildGhibliMemeView(constraints),
                 ),
               );
             },
@@ -281,93 +282,57 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
       width: constraints.maxWidth,
       height: 240,
       decoration: const BoxDecoration(color: Color(0xFFEAEEF4)),
-      child: Image.network(
-        widget.complaint.imageUrl,
+      child: CachedNetworkImage(
+        imageUrl: widget.complaint.imageUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
+        placeholder: (context, url) => _buildShimmerPlaceholder(),
+        errorWidget: (context, url, error) => _buildErrorPlaceholder(),
       ),
     );
   }
 
-  /// Image macro meme presentation layer with Ghibli Art style visuals and clean typography
-  /// styled with zero overflow protection.
-  Widget _buildMacroMemeLayer(BoxConstraints constraints) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Background Ghibli Art Style Meme image (or fallback to original image)
-        Image.network(
-          widget.complaint.ghibliMemeUrl ?? widget.complaint.imageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
-        ),
-        // Subtle darkening vignette so white meme text pops with high legibility
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.38),
-          ),
-        ),
-        // Top and bottom borders text layout with zero overflow guarantee
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Upper macro meme text aligned exactly to the top border
-              Flexible(
-                child: _buildMacroMemeText(widget.complaint.title.toUpperCase(), maxLines: 2),
-              ),
-              const SizedBox(height: 8),
-              // Lower punchline meme text aligned exactly to the bottom border
-              Flexible(
-                child: _buildMacroMemeText(widget.complaint.satireText.toUpperCase(), maxLines: 3),
-              ),
-            ],
-          ),
-        ),
-      ],
+  /// Cloud-baked Ghibli art meme asset view (rendered directly without local overlay widgets)
+  Widget _buildGhibliMemeView(BoxConstraints constraints) {
+    return Container(
+      width: constraints.maxWidth,
+      height: 240,
+      decoration: const BoxDecoration(color: Color(0xFFEAEEF4)),
+      child: CachedNetworkImage(
+        imageUrl: widget.complaint.ghibliMemeUrl ?? widget.complaint.imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => _buildShimmerPlaceholder(),
+        errorWidget: (context, url, error) => _buildErrorPlaceholder(),
+      ),
     );
   }
 
-  /// Helper rendering bold white typography styled with a clean stroke border and zero overflow
-  Widget _buildMacroMemeText(String text, {int maxLines = 3}) {
-    return Stack(
+  /// Light-themed subtle shimmer loading placeholder block
+  Widget _buildShimmerPlaceholder() {
+    return Container(
+      color: const Color(0xFFF1F5F9),
       alignment: Alignment.center,
-      children: [
-        // Black stroke border
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 13.5, // Reduced text size for elegance and zero overflow
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.8,
-            height: 1.2,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 2.5
-              ..color = Colors.black,
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4285F4)),
+            ),
           ),
-        ),
-        // White solid text fill
-        Text(
-          text,
-          textAlign: TextAlign.center,
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 13.5, // Reduced text size for elegance and zero overflow
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.8,
-            height: 1.2,
-            color: Colors.white,
+          SizedBox(height: 10),
+          Text(
+            'Loading Cloud Asset...',
+            style: TextStyle(
+              color: Color(0xFF70757A),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -403,7 +403,10 @@ class _SubmitComplaintScreenState extends ConsumerState<SubmitComplaintScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionLabel('Infrastructure Image Preview (Tap Box to Capture)'),
+                    Expanded(
+                      child: _buildSectionLabel('Infrastructure Image Preview (Tap to Capture)'),
+                    ),
+                    const SizedBox(width: 8),
                     if (_capturedImage != null || _demoImageUrl != null)
                       GestureDetector(
                         onTap: _isUploadingToCloudinary ? null : _showMediaPickerBottomSheet,
