@@ -219,7 +219,7 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
                 color: Color.fromARGB(255, 255, 255, 255),
               ),
               label: const Text(
-                'Reportr Issue',
+                'Report Issue',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -247,10 +247,24 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
     AsyncValue<List<Complaint>> feedAsyncValue,
     bool isSatireMode,
   ) {
-    if (_selectedNavIndex == 2) {
-      return _buildAccountView(isSatireMode);
-    }
+    return IndexedStack(
+      index: _selectedNavIndex,
+      children: [
+        // Index 0: National Feed
+        _buildFeedContent(feedAsyncValue, isSatireMode, isReportedTab: false),
+        // Index 1: Reported
+        _buildFeedContent(feedAsyncValue, isSatireMode, isReportedTab: true),
+        // Index 2: Account slot pointing directly to CitizenAccountScreen
+        const CitizenAccountScreen(showAppBar: false),
+      ],
+    );
+  }
 
+  Widget _buildFeedContent(
+    AsyncValue<List<Complaint>> feedAsyncValue,
+    bool isSatireMode, {
+    required bool isReportedTab,
+  }) {
     return GestureDetector(
       onDoubleTap: _toggleSatireMode,
       child: feedAsyncValue.when(
@@ -325,8 +339,7 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
             );
           }
 
-          // If on 'Reported' tab (index 1), display all civic reports logged
-          final displayList = _selectedNavIndex == 1 ? complaints : complaints;
+          final displayList = isReportedTab ? complaints : complaints;
 
           return RefreshIndicator(
             color: const Color(0xFF4285F4),
@@ -355,10 +368,6 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
         },
       ),
     );
-  }
-
-  Widget _buildAccountView(bool isSatireMode) {
-    return const CitizenAccountScreen(showAppBar: false);
   }
 
   /// Builds the 3-Option Google Stitch Light Breathable Bottom Navigation Bar
