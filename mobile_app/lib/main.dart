@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/theme/app_theme.dart';
-import 'package:mobile_app/views/gateway_login_screen.dart';
+import 'package:mobile_app/views/login_screen.dart';
 
 void main() {
   runApp(
@@ -20,12 +20,12 @@ class CivicSatireApp extends StatelessWidget {
     return MaterialApp(
       title: 'Civic Satire',
       debugShowCheckedModeBanner: false,
-      // Strict dark Material 3 ThemeData with deep background and high-contrast typography
-      theme: AppTheme.darkTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      // Strict light Material 3 ThemeData with solid white background and Google Stitch UI
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light,
       // Clean routing to the role-selection login screen
-      home: const GatewayLoginScreen(),
+      home: const LoginScreen(),
     );
   }
 }

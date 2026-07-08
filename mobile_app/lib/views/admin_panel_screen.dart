@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/services/auth_service.dart';
 
 /// Admin Panel layout displayed when authenticated as UserRole.admin with masterKey 'ADMIN777'
+/// Refactored to Google Stitch Light UI (#FFFFFF background, 8dp borders, sharp Google accents).
 class AdminPanelScreen extends ConsumerWidget {
   const AdminPanelScreen({super.key});
 
@@ -11,20 +12,21 @@ class AdminPanelScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B), // Corporate neutral dark surface (zinc-950)
+      backgroundColor: Colors.white, // Solid white background (#FFFFFF)
       appBar: AppBar(
-        backgroundColor: const Color(0xFF18181B),
+        backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF171C20)),
         title: const Row(
           children: [
-            Icon(Icons.admin_panel_settings_outlined, color: Color(0xFFE11D48), size: 24),
+            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFEA4335), size: 24),
             SizedBox(width: 10),
-            Text('RBAC Admin Command Panel', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+            Text('RBAC Admin Command Panel', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF171C20))),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFA1A1AA)),
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFF70757A)),
             tooltip: 'Clean Sign-Out (Test Loop Guard)',
             onPressed: () {
               ref.read(authProvider.notifier).logout();
@@ -44,19 +46,19 @@ class AdminPanelScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF18181B),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE11D48), width: 1.5),
+                  color: const Color(0xFFFFDAD6).withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFEA4335), width: 1.5),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE11D48).withValues(alpha: 0.15),
+                        color: const Color(0xFFEA4335).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.security, color: Color(0xFFE11D48), size: 28),
+                      child: const Icon(Icons.security, color: Color(0xFFEA4335), size: 28),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -65,12 +67,12 @@ class AdminPanelScreen extends ConsumerWidget {
                         children: [
                           const Text(
                             '⚡ ROOT ACCESS GRANTED',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 0.8),
+                            style: TextStyle(color: Color(0xFF171C20), fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 0.8),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Role: ${authState.role?.name.toUpperCase() ?? "UNKNOWN"} | Token: ${authState.token ?? "N/A"}',
-                            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12, fontFamily: 'monospace'),
+                            style: const TextStyle(color: Color(0xFFC5221F), fontSize: 12, fontFamily: 'monospace', fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -83,24 +85,24 @@ class AdminPanelScreen extends ConsumerWidget {
               // System Diagnostics Section Label
               const Text(
                 'EDGE AGENT PIPELINE DIAGNOSTICS',
-                style: TextStyle(color: Color(0xFF71717A), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+                style: TextStyle(color: Color(0xFF70757A), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.0),
               ),
               const SizedBox(height: 12),
 
               // Metric Cards Grid
               Row(
                 children: [
-                  Expanded(child: _buildMetricCard('Active Atlas Shards', '3 Shards', Icons.storage, Colors.greenAccent)),
+                  Expanded(child: _buildMetricCard('Active Atlas Shards', '3 Shards', Icons.storage, const Color(0xFF137333), const Color(0xFF34A853))),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildMetricCard('Vision AI Accuracy', '98.4%', Icons.auto_awesome, Colors.amber)),
+                  Expanded(child: _buildMetricCard('Vision AI Accuracy', '98.4%', Icons.auto_awesome, const Color(0xFFB06000), const Color(0xFFFBBC04))),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildMetricCard('Satire Copywriters', 'Online (15/15)', Icons.text_snippet_outlined, Colors.lightBlueAccent)),
+                  Expanded(child: _buildMetricCard('Satire Copywriters', 'Online (15/15)', Icons.text_snippet_outlined, const Color(0xFF0058BD), const Color(0xFF4285F4))),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildMetricCard('Backdoor Status', 'ADMIN777 Valid', Icons.key, const Color(0xFFE11D48))),
+                  Expanded(child: _buildMetricCard('Backdoor Status', 'ADMIN777 Valid', Icons.key, const Color(0xFFC5221F), const Color(0xFFEA4335))),
                 ],
               ),
               const SizedBox(height: 32),
@@ -108,7 +110,7 @@ class AdminPanelScreen extends ConsumerWidget {
               // Moderation Control Section
               const Text(
                 'SATIRE FEED MODERATION QUEUE',
-                style: TextStyle(color: Color(0xFF71717A), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+                style: TextStyle(color: Color(0xFF70757A), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.0),
               ),
               const SizedBox(height: 12),
               _buildQueueItem('GJ-01: BRTS Corridor Excavation Gridlock', 'Auto-Approved by Satire Agent', true),
@@ -124,13 +126,12 @@ class AdminPanelScreen extends ConsumerWidget {
                   ref.read(authProvider.notifier).logout();
                   Navigator.of(context).pop();
                 },
-                icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Sign Out & Terminate Admin Session', style: TextStyle(fontWeight: FontWeight.w600)),
+                icon: const Icon(Icons.logout_rounded, size: 18, color: Color(0xFF424753)),
+                label: const Text('Sign Out & Terminate Admin Session', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF424753))),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFFAFAFA),
-                  side: const BorderSide(color: Color(0xFF3F3F46)),
+                  side: const BorderSide(color: Color(0xFFDEE3E8), width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
@@ -140,22 +141,22 @@ class AdminPanelScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color accentColor) {
+  Widget _buildMetricCard(String title, String value, IconData icon, Color textColor, Color borderColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF3F3F46)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDEE3E8), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: accentColor, size: 22),
+          Icon(icon, color: borderColor, size: 22),
           const SizedBox(height: 12),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+          Text(value, style: const TextStyle(color: Color(0xFF171C20), fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 4),
-          Text(title, style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11)),
+          Text(title, style: const TextStyle(color: Color(0xFF70757A), fontSize: 11, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -165,15 +166,15 @@ class AdminPanelScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF27272A)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDEE3E8), width: 1.5),
       ),
       child: Row(
         children: [
           Icon(
             approved ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-            color: approved ? Colors.greenAccent : Colors.amber,
+            color: approved ? const Color(0xFF34A853) : const Color(0xFFFBBC04),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -181,9 +182,9 @@ class AdminPanelScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                Text(title, style: const TextStyle(color: Color(0xFF171C20), fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(height: 2),
-                Text(status, style: TextStyle(color: approved ? const Color(0xFFA1A1AA) : Colors.amber, fontSize: 11)),
+                Text(status, style: TextStyle(color: approved ? const Color(0xFF70757A) : const Color(0xFFB06000), fontSize: 11, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

@@ -5,10 +5,15 @@ import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/services/global_session_service.dart';
 import 'package:mobile_app/views/dashboard_orchestrator.dart';
 
-/// Production-ready Material 3 Citizen Registration Screen featuring structured RTO selection,
-/// rigorous validation handling, and seamless network offline degradation.
+/// Production-ready Material 3 Registration Screen for Citizens and Government Entities
+/// conforming strictly to the finalized Google Stitch Light UI design (#FFFFFF background, 8dp radius).
 class CitizenRegistrationScreen extends ConsumerStatefulWidget {
-  const CitizenRegistrationScreen({super.key});
+  final UserRole initialRole;
+
+  const CitizenRegistrationScreen({
+    super.key,
+    this.initialRole = UserRole.citizen,
+  });
 
   @override
   ConsumerState<CitizenRegistrationScreen> createState() => _CitizenRegistrationScreenState();
@@ -18,6 +23,7 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
+  late UserRole _selectedRole;
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -37,7 +43,7 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isRegistering = false;
-  bool _simulateNetworkFailure = false; // Toggle for testing offline network degradation
+  bool _simulateNetworkFailure = false;
   String? _errorMessage;
 
   late AnimationController _animationController;
@@ -46,6 +52,7 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
   @override
   void initState() {
     super.initState();
+    _selectedRole = widget.initialRole == UserRole.admin ? UserRole.citizen : widget.initialRole;
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -64,13 +71,11 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
     super.dispose();
   }
 
-  /// Validates email pattern
   bool _isValidEmail(String email) {
     final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return regex.hasMatch(email);
   }
 
-  /// Executes registration with clean offline network degradation handling
   Future<void> _handleRegistration() async {
     setState(() => _errorMessage = null);
 
@@ -86,32 +91,29 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
     final legacyAuth = ref.read(authProvider.notifier);
 
     try {
-      // Simulate network transmission delay
       await Future.delayed(const Duration(milliseconds: 800));
 
-      // 1. Check for network connectivity or simulated offline degradation
       if (_simulateNetworkFailure) {
         throw TimeoutException('Network handshake timed out. Background internet connection unavailable.');
       }
 
-      // 2. Online registration success
       final success = await globalAuth.authenticateUser(email, pass);
       if (success) {
-        legacyAuth.loginWithRole(UserRole.citizen);
+        legacyAuth.loginWithRole(_selectedRole);
       }
 
       if (success && mounted) {
-        _routeToDashboard('🎉 Registration successful! Welcome to the Civic Satire Portal.');
+        final roleLabel = _selectedRole == UserRole.government ? 'Government Entity' : 'Citizen';
+        _routeToDashboard('🎉 $roleLabel Registration successful! Welcome to StreetVoice.');
       }
     } catch (networkError) {
-      // 3. Clean Offline Network Degradation: cache session locally and proceed
       if (mounted) {
-        // Authenticate locally in fallback mode
         await globalAuth.authenticateUser(email, pass);
-        legacyAuth.loginWithRole(UserRole.citizen);
+        legacyAuth.loginWithRole(_selectedRole);
 
+        final roleLabel = _selectedRole == UserRole.government ? 'Gov Office' : 'Citizen';
         _routeToDashboard(
-          '⚠️ Network Offline ($networkError). Account cached in Local Shard. Entering Citizen Portal in Offline Mode.',
+          '⚠️ Network Offline ($networkError). Account cached locally. Entering $roleLabel Portal in Offline Mode.',
           isWarning: true,
         );
       }
@@ -130,29 +132,28 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
           children: [
             Icon(
               isWarning ? Icons.signal_wifi_off_rounded : Icons.check_circle_outline,
-              color: isWarning ? Colors.amberAccent : Colors.greenAccent,
-              size: 22,
+              color: isWarning ? const Color(0xFFFBBC04) : const Color(0xFF34A853),
+              size: 20,
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                style: const TextStyle(color: Color(0xFF171C20), fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF18181B),
+        backgroundColor: const Color(0xFFF6FAFF),
         duration: Duration(seconds: isWarning ? 5 : 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: isWarning ? Colors.amberAccent : Colors.greenAccent),
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: isWarning ? const Color(0xFFFBBC04) : const Color(0xFF34A853), width: 1.5),
         ),
       ),
     );
 
-    // Smooth native routing animation to DashboardOrchestrator
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 400),
@@ -175,29 +176,35 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
 
   @override
   Widget build(BuildContext context) {
+    final isCitizen = _selectedRole == UserRole.citizen;
+    final primaryColor = isCitizen ? const Color(0xFF4285F4) : const Color(0xFFEA4335);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B), // Material 3 deep dark zinc background
+      backgroundColor: Colors.white, // Solid white background (#FFFFFF)
       appBar: AppBar(
-        backgroundColor: const Color(0xFF18181B),
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text('Citizen Enrollment', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        iconTheme: const IconThemeData(color: Color(0xFF171C20)),
+        title: Text(
+          isCitizen ? 'Citizen Registration' : 'Government Office Registration',
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF171C20)),
+        ),
         actions: [
-          // Network Simulation Toggle Chip for testing offline degradation
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ActionChip(
               avatar: Icon(
                 _simulateNetworkFailure ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-                color: _simulateNetworkFailure ? Colors.amberAccent : Colors.greenAccent,
+                color: _simulateNetworkFailure ? const Color(0xFFFBBC04) : const Color(0xFF34A853),
                 size: 16,
               ),
               label: Text(
                 _simulateNetworkFailure ? 'Offline Sim' : 'Online Sim',
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Color(0xFF171C20), fontSize: 11, fontWeight: FontWeight.bold),
               ),
-              backgroundColor: const Color(0xFF27272A),
-              side: BorderSide(color: _simulateNetworkFailure ? Colors.amberAccent : const Color(0xFF3F3F46)),
+              backgroundColor: const Color(0xFFF6FAFF),
+              side: BorderSide(color: _simulateNetworkFailure ? const Color(0xFFFBBC04) : const Color(0xFFDEE3E8), width: 1.5),
               onPressed: () => setState(() => _simulateNetworkFailure = !_simulateNetworkFailure),
             ),
           ),
@@ -217,37 +224,49 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildHeader(),
-                      const SizedBox(height: 28),
+                      _buildHeader(primaryColor, isCitizen),
+                      const SizedBox(height: 24),
 
-                      // 1. Full Name Input
-                      _buildLabel('Full Name'),
+                      // Role Switcher Toggle
+                      _buildRoleToggle(),
+                      const SizedBox(height: 24),
+
+                      // 1. Full Name / Office Name Input
+                      _buildLabel(isCitizen ? 'Full Name' : 'Official Municipal Office Name'),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: _fullNameController,
                         enabled: !_isRegistering,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        style: const TextStyle(color: Color(0xFF171C20), fontWeight: FontWeight.w600),
                         textCapitalization: TextCapitalization.words,
-                        decoration: _buildInputDecoration(hintText: 'e.g., Rajesh Sharma', icon: Icons.person_outline_rounded),
-                        validator: (val) => val == null || val.trim().isEmpty ? 'Please enter your full name' : null,
+                        decoration: _buildInputDecoration(
+                          hintText: isCitizen ? 'e.g., Rajesh Sharma' : 'e.g., Andheri Road Works Department',
+                          icon: isCitizen ? Icons.person_outline_rounded : Icons.account_balance_outlined,
+                          primaryColor: primaryColor,
+                        ),
+                        validator: (val) => val == null || val.trim().isEmpty ? 'Please enter required name/office' : null,
                       ),
                       const SizedBox(height: 18),
 
                       // 2. Target Regional Code Selection (RTO Patterns)
                       _buildLabel('Target Regional Jurisdiction (RTO Scope)'),
                       const SizedBox(height: 6),
-                      _buildRtoDropdown(),
+                      _buildRtoDropdown(primaryColor),
                       const SizedBox(height: 18),
 
                       // 3. Email Input
-                      _buildLabel('Email Address'),
+                      _buildLabel(isCitizen ? 'Email Address' : 'Official Gov Email Address'),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: _emailController,
                         enabled: !_isRegistering,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Color(0xFF171C20)),
                         keyboardType: TextInputType.emailAddress,
-                        decoration: _buildInputDecoration(hintText: 'citizen@domain.com', icon: Icons.email_outlined),
+                        decoration: _buildInputDecoration(
+                          hintText: isCitizen ? 'citizen@domain.com' : 'officer@municipal.gov.in',
+                          icon: Icons.email_outlined,
+                          primaryColor: primaryColor,
+                        ),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) return 'Email is required';
                           if (!_isValidEmail(val.trim())) return 'Please enter a valid email pattern';
@@ -263,12 +282,13 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
                         controller: _passwordController,
                         enabled: !_isRegistering,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Color(0xFF171C20)),
                         decoration: _buildInputDecoration(
                           hintText: 'Minimum 6 characters',
                           icon: Icons.lock_outline_rounded,
+                          primaryColor: primaryColor,
                           suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF71717A)),
+                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF70757A)),
                             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
@@ -287,12 +307,13 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
                         controller: _confirmPasswordController,
                         enabled: !_isRegistering,
                         obscureText: _obscureConfirmPassword,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Color(0xFF171C20)),
                         decoration: _buildInputDecoration(
                           hintText: 'Re-type password',
                           icon: Icons.verified_user_outlined,
+                          primaryColor: primaryColor,
                           suffixIcon: IconButton(
-                            icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF71717A)),
+                            icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF70757A)),
                             onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                           ),
                         ),
@@ -310,17 +331,17 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
                       ],
 
                       // 6. Submit Registration Button
-                      _buildSubmitButton(),
+                      _buildSubmitButton(primaryColor, isCitizen),
                       const SizedBox(height: 20),
 
                       // 7. Back to Login Link
                       Center(
                         child: TextButton.icon(
                           onPressed: _isRegistering ? null : () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Color(0xFFA1A1AA)),
+                          icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Color(0xFF70757A)),
                           label: const Text(
                             'Return to Gateway Login',
-                            style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: Color(0xFF70757A), fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -335,30 +356,136 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildRoleToggle() {
+    final isCitizen = _selectedRole == UserRole.citizen;
+    final isGov = _selectedRole == UserRole.government;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4.0, bottom: 8.0),
+          child: Text(
+            'ACCOUNT TYPE',
+            style: TextStyle(
+              color: Color(0xFF424753),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedRole = UserRole.citizen),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: isCitizen ? const Color(0xFFF6FAFF) : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isCitizen ? const Color(0xFF4285F4) : const Color(0xFFDEE3E8),
+                      width: isCitizen ? 2.0 : 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.person_outline_rounded, size: 18, color: isCitizen ? const Color(0xFF4285F4) : const Color(0xFF70757A)),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Citizen Portal',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: isCitizen ? const Color(0xFF4285F4) : const Color(0xFF70757A),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedRole = UserRole.government),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: isGov ? const Color(0xFFFFDAD6) : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isGov ? const Color(0xFFEA4335) : const Color(0xFFDEE3E8),
+                      width: isGov ? 2.0 : 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.account_balance_outlined, size: 18, color: isGov ? const Color(0xFFEA4335) : const Color(0xFF70757A)),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Government Entity',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: isGov ? const Color(0xFFEA4335) : const Color(0xFF70757A),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(Color primaryColor, bool isCitizen) {
     return Column(
       children: [
         Container(
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF10B981), width: 1.5),
+            color: primaryColor.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: primaryColor, width: 1.5),
           ),
-          child: const Icon(Icons.app_registration_rounded, size: 32, color: Color(0xFF10B981)),
+          child: Icon(
+            isCitizen ? Icons.person_add_outlined : Icons.account_balance_rounded,
+            size: 32,
+            color: primaryColor,
+          ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Join the Civic Satire Network',
+        Text(
+          isCitizen ? 'Join as a Citizen' : 'Register Municipal Entity',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+          style: const TextStyle(color: Color(0xFF171C20), fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 0.3),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Report civic infrastructure defects with automated satirical copy formatting and regional RTO mapping.',
+        Text(
+          isCitizen
+              ? 'Report civic infrastructure defects with satirical copy formatting and regional RTO mapping.'
+              : 'Official ingress for municipal officers to monitor, resolve, and update civic infrastructure telemetry.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+          style: const TextStyle(color: Color(0xFF424753), fontSize: 13),
         ),
       ],
     );
@@ -367,62 +494,63 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
   Widget _buildLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, fontWeight: FontWeight.w600),
+      style: const TextStyle(color: Color(0xFF424753), fontSize: 13, fontWeight: FontWeight.w600),
     );
   }
 
   InputDecoration _buildInputDecoration({
     required String hintText,
     required IconData icon,
+    required Color primaryColor,
     Widget? suffixIcon,
   }) {
     return InputDecoration(
       filled: true,
-      fillColor: const Color(0xFF18181B),
+      fillColor: Colors.white,
       hintText: hintText,
-      hintStyle: const TextStyle(color: Color(0xFF52525B), fontSize: 14),
-      prefixIcon: Icon(icon, color: const Color(0xFF71717A), size: 20),
+      hintStyle: const TextStyle(color: Color(0xFF70757A), fontSize: 14),
+      prefixIcon: Icon(icon, color: const Color(0xFF70757A), size: 20),
       suffixIcon: suffixIcon,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF3F3F46), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFFDEE3E8), width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF3F3F46), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFFDEE3E8), width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: Color(0xFFEA4335), width: 1.5),
       ),
     );
   }
 
-  Widget _buildRtoDropdown() {
+  Widget _buildRtoDropdown(Color primaryColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF3F3F46), width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDEE3E8), width: 1.5),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedRtoCode,
-          dropdownColor: const Color(0xFF27272A),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF10B981)),
+          dropdownColor: Colors.white,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
           isExpanded: true,
-          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: Color(0xFF171C20), fontSize: 14, fontWeight: FontWeight.w600),
           onChanged: _isRegistering
               ? null
               : (String? newValue) {
                   if (newValue != null) {
-                    setState(() => _selectedRtoCode = newValue);
+                     setState(() => _selectedRtoCode = newValue);
                   }
                 },
           items: _rtoOptions.map<DropdownMenuItem<String>>((String value) {
@@ -430,9 +558,9 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
               value: value,
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, color: Color(0xFF10B981), size: 16),
+                  Icon(Icons.location_on, color: primaryColor, size: 16),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(value, overflow: TextOverflow.ellipsis)),
+                  Expanded(child: Text(value, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF171C20)))),
                 ],
               ),
             );
@@ -446,48 +574,50 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+        color: const Color(0xFFEA4335).withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFEA4335).withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 20),
+          const Icon(Icons.error_outline_rounded, color: Color(0xFFEA4335), size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(error, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+            child: Text(error, style: const TextStyle(color: Color(0xFFEA4335), fontSize: 13, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(Color primaryColor, bool isCitizen) {
     return ElevatedButton(
       onPressed: _isRegistering ? null : _handleRegistration,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF10B981),
-        disabledBackgroundColor: const Color(0xFF10B981).withValues(alpha: 0.5),
-        foregroundColor: Colors.white,
+        backgroundColor: primaryColor.withValues(alpha: 0.15),
+        disabledBackgroundColor: const Color(0xFFDEE3E8),
+        foregroundColor: primaryColor,
         padding: const EdgeInsets.symmetric(vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 6,
-        shadowColor: const Color(0xFF10B981).withValues(alpha: 0.4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: primaryColor, width: 1.5),
+        ),
+        elevation: 0,
       ),
       child: _isRegistering
-          ? const SizedBox(
+          ? SizedBox(
               height: 22,
               width: 22,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+              child: CircularProgressIndicator(color: primaryColor, strokeWidth: 2.5),
             )
-          : const Row(
+          : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline_rounded, size: 20),
-                SizedBox(width: 10),
+                Icon(isCitizen ? Icons.check_circle_outline_rounded : Icons.verified_outlined, size: 20, color: primaryColor),
+                const SizedBox(width: 10),
                 Text(
-                  'COMPLETE CITIZEN REGISTRATION',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                  isCitizen ? 'COMPLETE CITIZEN REGISTRATION' : 'REGISTER GOV ENTITY ACCOUNT',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                 ),
               ],
             ),

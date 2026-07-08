@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/complaint.dart';
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
-import 'package:mobile_app/views/gateway_login_screen.dart';
+import 'package:mobile_app/views/login_screen.dart';
 import 'package:mobile_app/views/national_feed_screen.dart';
 
 /// Core systems structural routing controller watching Riverpod auth state
@@ -14,9 +14,9 @@ class DashboardOrchestrator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
 
-    // 1. Guard check: if unauthenticated, render GatewayLoginScreen
+    // 1. Guard check: if unauthenticated, render LoginScreen
     if (!authState.isAuthenticated || authState.role == null) {
-      return const GatewayLoginScreen();
+      return const LoginScreen();
     }
 
     // 2. Standard switch statement checking active role context
@@ -45,8 +45,8 @@ class CitizenUIView extends StatelessWidget {
 }
 
 /// ---------------------------------------------------------------------------
-/// GOVERNMENT ENTITY VIEW
-/// Analytical, data-heavy complaint status monitor replacing satire with formal pills
+/// GOVERNMENT ENTITY VIEW (Google Stitch Light UI)
+/// Clean white (#FFFFFF) background, 8dp borders, and sharp formal status pills
 /// ---------------------------------------------------------------------------
 class GovernmentEntityView extends ConsumerWidget {
   const GovernmentEntityView({super.key});
@@ -57,20 +57,21 @@ class GovernmentEntityView extends ConsumerWidget {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: Colors.white, // Solid white (#FFFFFF) background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF18181B),
+        backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF171C20)),
         title: const Row(
           children: [
-            Icon(Icons.account_balance_rounded, color: Colors.blueAccent, size: 20),
+            Icon(Icons.account_balance_rounded, color: Color(0xFF4285F4), size: 22),
             SizedBox(width: 8),
             Expanded(
               child: Text(
                 'MUNICIPAL INFRASTRUCTURE MONITOR',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF171C20), letterSpacing: 0.5),
               ),
             ),
           ],
@@ -79,18 +80,18 @@ class GovernmentEntityView extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.blueAccent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5)),
+              color: const Color(0xFFF6FAFF),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF4285F4), width: 1.5),
             ),
             child: Text(
               'GOV ACCESS | ${authState.token ?? "ACTIVE"}',
-              style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 11, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: Color(0xFF0058BD), fontSize: 11, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 8),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFA1A1AA)),
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFF70757A)),
             tooltip: 'Terminate Municipal Session',
             onPressed: () {
               ref.read(authProvider.notifier).logout();
@@ -106,15 +107,15 @@ class GovernmentEntityView extends ConsumerWidget {
             Expanded(
               child: feedAsync.when(
                 loading: () => const Center(
-                  child: CircularProgressIndicator(color: Colors.blueAccent),
+                  child: CircularProgressIndicator(color: Color(0xFF4285F4)),
                 ),
                 error: (err, _) => Center(
-                  child: Text('Failed to load municipal telemetry: $err', style: const TextStyle(color: Colors.redAccent)),
+                  child: Text('Failed to load municipal telemetry: $err', style: const TextStyle(color: Color(0xFFEA4335))),
                 ),
                 data: (complaints) {
                   if (complaints.isEmpty) {
                     return const Center(
-                      child: Text('Zero open civic infrastructure defects logged.', style: TextStyle(color: Color(0xFF71717A))),
+                      child: Text('Zero open civic infrastructure defects logged.', style: TextStyle(color: Color(0xFF70757A))),
                     );
                   }
                   return ListView.builder(
@@ -138,22 +139,22 @@ class GovernmentEntityView extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
-        color: Color(0xFF18181B),
-        border: Border(bottom: BorderSide(color: Color(0xFF27272A), width: 1.5)),
+        color: Color(0xFFF8F9FA),
+        border: Border(bottom: BorderSide(color: Color(0xFFDEE3E8), width: 1.5)),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Expanded(child: _buildTelemetryMetric('OPEN CASELOAD', '15 ACTIVE', Colors.amberAccent)),
-              Expanded(child: _buildTelemetryMetric('AVG DISPATCH SPEED', '4.2 HOURS', Colors.greenAccent)),
+              Expanded(child: _buildTelemetryMetric('OPEN CASELOAD', '15 ACTIVE', const Color(0xFFB06000))),
+              Expanded(child: _buildTelemetryMetric('AVG DISPATCH SPEED', '4.2 HOURS', const Color(0xFF137333))),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildTelemetryMetric('AI SEVERITY INDEX', 'TIER 1 CRITICAL', const Color(0xFFE11D48))),
-              Expanded(child: _buildTelemetryMetric('MEME OVERLAYS', 'SUPPRESSED / HIDDEN', Colors.grey)),
+              Expanded(child: _buildTelemetryMetric('AI SEVERITY INDEX', 'TIER 1 CRITICAL', const Color(0xFFC5221F))),
+              Expanded(child: _buildTelemetryMetric('MEME OVERLAYS', 'SUPPRESSED / HIDDEN', const Color(0xFF424753))),
             ],
           ),
         ],
@@ -165,22 +166,22 @@ class GovernmentEntityView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+        Text(label, style: const TextStyle(color: Color(0xFF70757A), fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
         const SizedBox(height: 3),
         Text(val, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w800)),
       ],
     );
   }
 
-  /// Builds formal, high-contrast, text-heavy status card without satire meme overlays
+  /// Builds formal, high-contrast, light-themed status card without satire meme overlays
   Widget _buildFormalComplaintStatusCard(Complaint complaint) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF3F3F46), width: 1.2),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8), // Exactly 8dp radius
+        border: Border.all(color: const Color(0xFFDEE3E8), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,24 +193,24 @@ class GovernmentEntityView extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF27272A),
+                  color: const Color(0xFFF6FAFF),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.4)),
+                  border: Border.all(color: const Color(0xFF4285F4), width: 1.5),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.location_city_rounded, color: Colors.blueAccent, size: 14),
+                    const Icon(Icons.location_city_rounded, color: Color(0xFF4285F4), size: 14),
                     const SizedBox(width: 6),
                     Text(
                       'RTO JURISDICTION: ${complaint.rtoCode}',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                      style: const TextStyle(color: Color(0xFF0058BD), fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                     ),
                   ],
                 ),
               ),
               Text(
                 'LOGGED: ${complaint.createdAt.toString().split(' ')[0]}',
-                style: const TextStyle(color: Color(0xFF71717A), fontSize: 11, fontFamily: 'monospace'),
+                style: const TextStyle(color: Color(0xFF70757A), fontSize: 11, fontFamily: 'monospace'),
               ),
             ],
           ),
@@ -218,24 +219,24 @@ class GovernmentEntityView extends ConsumerWidget {
           // Title & Formal Technical Description
           Text(
             complaint.title,
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+            style: const TextStyle(color: Color(0xFF171C20), fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
             complaint.description,
-            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, height: 1.4),
+            style: const TextStyle(color: Color(0xFF424753), fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 16),
 
-          // Formal High-Contrast Text-Heavy Status Pills (Meme overlays explicitly hidden)
+          // Formal High-Contrast Light Pills (Meme overlays explicitly hidden)
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildFormalStatusPill('REVIEW PENDING', Colors.amber),
-              _buildFormalStatusPill('DISPATCHED TO MUNICIPALITY', Colors.lightBlueAccent),
-              _buildFormalStatusPill('STRUCTURAL INSPECTION REQUIRED', const Color(0xFFE11D48)),
-              _buildFormalStatusPill('PRIORITY TIER 1', Colors.greenAccent),
+              _buildFormalStatusPill('REVIEW PENDING', const Color(0xFFB06000), const Color(0xFFFBBC04)),
+              _buildFormalStatusPill('DISPATCHED TO MUNICIPALITY', const Color(0xFF0058BD), const Color(0xFF4285F4)),
+              _buildFormalStatusPill('STRUCTURAL INSPECTION REQUIRED', const Color(0xFFC5221F), const Color(0xFFEA4335)),
+              _buildFormalStatusPill('PRIORITY TIER 1', const Color(0xFF137333), const Color(0xFF34A853)),
             ],
           ),
           const SizedBox(height: 18),
@@ -246,21 +247,27 @@ class GovernmentEntityView extends ConsumerWidget {
             children: [
               OutlinedButton.icon(
                 onPressed: () {},
-                icon: const Icon(Icons.assignment_ind_outlined, size: 16, color: Colors.blueAccent),
-                label: const Text('Assign Inspector', style: TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.assignment_ind_outlined, size: 16, color: Color(0xFF0058BD)),
+                label: const Text('Assign Inspector', style: TextStyle(color: Color(0xFF0058BD), fontSize: 12, fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.blueAccent.withValues(alpha: 0.5)),
+                  side: const BorderSide(color: Color(0xFF4285F4), width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
                 onPressed: () {},
-                icon: const Icon(Icons.check_circle_outline, size: 16),
-                label: const Text('Mark Dispatched', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF0058BD)),
+                label: const Text('Mark Dispatched', style: TextStyle(color: Color(0xFF0058BD), fontSize: 12, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  backgroundColor: const Color(0xFF4285F4).withValues(alpha: 0.15),
+                  foregroundColor: const Color(0xFF0058BD),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(color: Color(0xFF4285F4), width: 1.5),
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
@@ -271,24 +278,24 @@ class GovernmentEntityView extends ConsumerWidget {
     );
   }
 
-  Widget _buildFormalStatusPill(String label, Color color) {
+  Widget _buildFormalStatusPill(String label, Color textColor, Color borderColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: borderColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.6), width: 1),
+        border: Border.all(color: borderColor, width: 1.5),
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+        style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
       ),
     );
   }
 }
 
 /// ---------------------------------------------------------------------------
-/// ADMIN CORE PANEL VIEW
+/// ADMIN CORE PANEL VIEW (Google Stitch Light UI)
 /// Elite command room screen with raw backend logs, system analytics, and DB drop
 /// ---------------------------------------------------------------------------
 class AdminCorePanelView extends ConsumerStatefulWidget {
@@ -313,26 +320,26 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF18181B),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFFE11D48), width: 1.5),
+          side: const BorderSide(color: Color(0xFFEA4335), width: 1.5),
         ),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFE11D48), size: 28),
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFEA4335), size: 28),
             SizedBox(width: 10),
-            Text('CRITICAL WARNING', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+            Text('CRITICAL WARNING', style: TextStyle(color: Color(0xFF171C20), fontWeight: FontWeight.w900)),
           ],
         ),
         content: const Text(
           'You are about to execute a MASTER DATABASE DROP on MongoDB Atlas Cluster0 (civic_satire -> complaints).\n\nThis action will purge all 15 civic records, terminate active edge vision pipelines, and reset shard indexes. Proceed?',
-          style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, height: 1.4),
+          style: TextStyle(color: Color(0xFF424753), fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ABORT', style: TextStyle(color: Color(0xFFA1A1AA), fontWeight: FontWeight.bold)),
+            child: const Text('ABORT', style: TextStyle(color: Color(0xFF70757A), fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -352,13 +359,13 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
                       Text('💥 Master Database Purged! All collections & shards reset.', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                     ],
                   ),
-                  backgroundColor: const Color(0xFFE11D48),
+                  backgroundColor: const Color(0xFFEA4335),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE11D48)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEA4335)),
             child: const Text('PURGE MASTER DATABASE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -371,20 +378,21 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: Colors.white, // Solid white background (#FFFFFF)
       appBar: AppBar(
-        backgroundColor: const Color(0xFF18181B),
+        backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF171C20)),
         title: const Row(
           children: [
-            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFE11D48), size: 22),
+            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFEA4335), size: 22),
             SizedBox(width: 8),
             Expanded(
               child: Text(
                 'ELITE ADMIN COMMAND ROOM',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.8),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF171C20), letterSpacing: 0.8),
               ),
             ),
           ],
@@ -393,18 +401,18 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFE11D48).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFFE11D48)),
+              color: const Color(0xFFFFDAD6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFEA4335), width: 1.5),
             ),
             child: Text(
               'ROOT ACCESS | ${authState.token ?? "ADMIN777"}',
-              style: const TextStyle(color: Color(0xFFE11D48), fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+              style: const TextStyle(color: Color(0xFFC5221F), fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
             ),
           ),
           const SizedBox(width: 12),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFA1A1AA)),
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFF70757A)),
             tooltip: 'Sign Out & Terminate Root Session',
             onPressed: () {
               ref.read(authProvider.notifier).logout();
@@ -423,22 +431,22 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
               // Section 1: System Analytics Telemetry Fields
               const Text(
                 'SYSTEM ANALYTICS TELEMETRY FIELDS',
-                style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+                style: TextStyle(color: Color(0xFF70757A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.0),
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: _buildTelemetryCard('ATLAS SHARDS', '3 Active Shards', 'Latency: 14ms', Icons.storage, Colors.greenAccent)),
+                  Expanded(child: _buildTelemetryCard('ATLAS SHARDS', '3 Active Shards', 'Latency: 14ms', Icons.storage, const Color(0xFF137333), const Color(0xFF34A853))),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildTelemetryCard('VISION AI PIPELINE', '98.4% Accuracy', 'Throughput: 42 req/s', Icons.auto_awesome, Colors.amber)),
+                  Expanded(child: _buildTelemetryCard('VISION AI PIPELINE', '98.4% Accuracy', 'Throughput: 42 req/s', Icons.auto_awesome, const Color(0xFFB06000), const Color(0xFFFBBC04))),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildTelemetryCard('SATIRE ENGINE', '15 Shards Online', 'Sarcasm Index: 9.8/10', Icons.psychology, Colors.lightBlueAccent)),
+                  Expanded(child: _buildTelemetryCard('SATIRE ENGINE', '15 Shards Online', 'Sarcasm Index: 9.8/10', Icons.psychology, const Color(0xFF0058BD), const Color(0xFF4285F4))),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildTelemetryCard('CPU & RAM LOAD', '14.2% / 2.1 GB', 'Status: Optimal', Icons.memory, const Color(0xFFE11D48))),
+                  Expanded(child: _buildTelemetryCard('CPU & RAM LOAD', '14.2% / 2.1 GB', 'Status: Optimal', Icons.memory, const Color(0xFFC5221F), const Color(0xFFEA4335))),
                 ],
               ),
               const SizedBox(height: 28),
@@ -449,11 +457,11 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
                 children: [
                   const Text(
                     'RAW BACKEND TELEMETRY & STITCH LOGS',
-                    style: TextStyle(color: Color(0xFF71717A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+                    style: TextStyle(color: Color(0xFF70757A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.0),
                   ),
                   Text(
                     'LIVE TAIL (200 OK)',
-                    style: TextStyle(color: Colors.greenAccent.shade400, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                    style: TextStyle(color: Colors.green.shade700, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
                   ),
                 ],
               ),
@@ -462,9 +470,9 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
                 height: 220,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF18181B),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF3F3F46), width: 1.2),
+                  color: const Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFDEE3E8), width: 1.5),
                 ),
                 child: ListView.builder(
                   physics: const BouncingScrollPhysics(),
@@ -477,7 +485,7 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
                       child: Text(
                         log,
                         style: TextStyle(
-                          color: isWarning ? const Color(0xFFE11D48) : const Color(0xFFA1A1AA),
+                          color: isWarning ? const Color(0xFFC5221F) : const Color(0xFF424753),
                           fontFamily: 'monospace',
                           fontSize: 12,
                           fontWeight: isWarning ? FontWeight.bold : FontWeight.normal,
@@ -494,27 +502,27 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF18181B),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE11D48).withValues(alpha: 0.6), width: 1.5),
+                  color: const Color(0xFFFFDAD6).withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFEA4335), width: 1.5),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.dangerous_outlined, color: Color(0xFFE11D48), size: 22),
+                        Icon(Icons.dangerous_outlined, color: Color(0xFFEA4335), size: 22),
                         SizedBox(width: 8),
                         Text(
                           'DANGER ZONE: MASTER DATABASE CONTROLS',
-                          style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          style: TextStyle(color: Color(0xFF171C20), fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Executing a database drop will instantly clear all cloud collections and reset edge vision validation models. Use with extreme caution during judging presentations.',
-                      style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 12, height: 1.4),
+                      style: TextStyle(color: Color(0xFF424753), fontSize: 12, height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
@@ -527,11 +535,11 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.8),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE11D48),
+                          backgroundColor: const Color(0xFFEA4335),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          elevation: 4,
+                          elevation: 0,
                         ),
                       ),
                     ),
@@ -545,13 +553,13 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
     );
   }
 
-  Widget _buildTelemetryCard(String title, String val1, String val2, IconData icon, Color color) {
+  Widget _buildTelemetryCard(String title, String val1, String val2, IconData icon, Color textColor, Color borderColor) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF3F3F46)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDEE3E8), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,14 +567,14 @@ class _AdminCorePanelViewState extends ConsumerState<AdminCorePanelView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(color: Color(0xFF71717A), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-              Icon(icon, color: color, size: 18),
+              Text(title, style: const TextStyle(color: Color(0xFF70757A), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+              Icon(icon, color: borderColor, size: 18),
             ],
           ),
           const SizedBox(height: 8),
-          Text(val1, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
+          Text(val1, style: const TextStyle(color: Color(0xFF171C20), fontSize: 15, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(val2, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600, fontFamily: 'monospace')),
+          Text(val2, style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w600, fontFamily: 'monospace')),
         ],
       ),
     );

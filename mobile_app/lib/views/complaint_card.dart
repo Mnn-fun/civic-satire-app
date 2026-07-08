@@ -40,38 +40,45 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B), // Corporate neutral dark surface (zinc-900)
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white, // Pure white surface (#FFFFFF)
+        borderRadius: BorderRadius.circular(8), // Exactly 8dp rectangular boundary
         border: Border.all(
-          color: const Color(0xFF3F3F46), // Clean neutral gray border (zinc-700)
+          color: const Color(0xFFDEE3E8), // Light-grey outline
           width: 1.0,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04), // Ethereal low-density shadow
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: RTO Code badge and timestamp
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF27272A),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFF52525B)),
+                    color: const Color(0xFF4285F4).withValues(alpha: 0.10), // Translucent Google Blue fill
+                    borderRadius: BorderRadius.circular(8), // 8dp boundary
+                    border: Border.all(color: const Color(0xFF4285F4), width: 1.5), // Sharp 1.5dp blue outline
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.location_on, size: 14, color: Color(0xFF3B82F6)),
+                      const Icon(Icons.location_on, size: 14, color: Color(0xFF0058BD)),
                       const SizedBox(width: 4),
                       Text(
                         widget.complaint.rtoCode,
                         style: const TextStyle(
-                          color: Color(0xFFFAFAFA),
+                          color: Color(0xFF0058BD),
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
@@ -83,8 +90,9 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
                 Text(
                   _formatDate(widget.complaint.createdAt),
                   style: const TextStyle(
-                    color: Color(0xFFA1A1AA),
+                    color: Color(0xFF70757A), // Neutral secondary text
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -93,125 +101,52 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
 
           // Title & Description
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.complaint.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFFFAFAFA),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: const Color(0xFF171C20), // Off-black high legibility
                     fontWeight: FontWeight.w700,
                     height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   widget.complaint.description,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFFA1A1AA),
+                    color: const Color(0xFF424753), // Refined medium grey
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
               ],
             ),
           ),
 
-          // Image section with strict Stack/Positioned/LayoutBuilder setup
+          // Image macro meme engine with smooth AnimatedCrossFade
           LayoutBuilder(
             builder: (context, constraints) {
-              return Stack(
-                children: [
-                  // Base image layer
-                  Container(
-                    width: constraints.maxWidth,
-                    height: 200,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF27272A),
-                    ),
-                    child: Image.network(
-                      widget.complaint.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: const Color(0xFF27272A),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.broken_image_outlined, color: Color(0xFF52525B), size: 36),
-                              SizedBox(height: 8),
-                              Text('Civic Evidence Photo', style: TextStyle(color: Color(0xFF71717A), fontSize: 12)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  // AI Satire Text Overlay revealed when satireMode is triggered (via shake or toggle)
-                  if (isSatireMode)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.75),
-                              const Color(0xFFE11D48).withValues(alpha: 0.95),
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.amber.shade400, width: 1),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.auto_awesome, color: Colors.amber.shade400, size: 14),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'AI SATIRE GENERATED',
-                                      style: TextStyle(
-                                        color: Colors.amber.shade400,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                '"${widget.complaint.satireText}"',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.2,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+              return SizedBox(
+                width: constraints.maxWidth,
+                height: 240,
+                child: AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 350),
+                  crossFadeState: isSatireMode ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                  layoutBuilder: (topChild, topChildKey, bottomChild, bottomChildKey) {
+                    return Stack(
+                      clipBehavior: Clip.antiAlias,
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned.fill(key: bottomChildKey, child: bottomChild),
+                        Positioned.fill(key: topChildKey, child: topChild),
+                      ],
+                    );
+                  },
+                  firstChild: _buildNormalImageView(constraints),
+                  secondChild: _buildMacroMemeLayer(constraints),
+                ),
               );
             },
           ),
@@ -220,66 +155,66 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
           InkWell(
             onTap: _toggleAccordion,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.arrow_upward_rounded,
-                    size: 18,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${widget.complaint.upvotes}',
-                    style: const TextStyle(
-                      color: Color(0xFFFAFAFA),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
                   const Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 16,
-                    color: Color(0xFFA1A1AA),
+                    Icons.thumb_up_alt_rounded,
+                    size: 18,
+                    color: Color(0xFF4285F4), // Google Blue icon
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    _isExpanded ? 'Hide Details' : 'Discourse (${widget.complaint.comments.length})',
+                    '${widget.complaint.upvotes}',
                     style: const TextStyle(
-                      color: Color(0xFFA1A1AA),
+                      color: Color(0xFF171C20),
+                      fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  const Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    size: 16,
+                    color: Color(0xFF70757A),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _isExpanded ? 'Hide Discourse' : 'Discourse (${widget.complaint.comments.length})',
+                    style: const TextStyle(
+                      color: Color(0xFF424753),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const Spacer(),
                   Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: const Color(0xFFA1A1AA),
+                    _isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                    color: const Color(0xFF70757A),
                   ),
                 ],
               ),
             ),
           ),
 
-          // In-line Accordion Expansion using basic AnimatedContainer with Curves.linear
+          // In-line Accordion Expansion
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            curve: Curves.linear,
+            curve: Curves.easeOutCubic,
             height: _isExpanded ? 130 : 0,
             width: double.infinity,
             clipBehavior: Clip.hardEdge,
             decoration: const BoxDecoration(
-              color: Color(0xFF121214), // slightly darker inset
+              color: Color(0xFFF6FAFF), // Airy light surface container
             ),
             child: SingleChildScrollView(
               physics: const NeverScrollableScrollPhysics(),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Divider(color: Color(0xFF27272A), height: 1),
+                    const Divider(color: Color(0xFFDEE3E8), height: 1),
                     const SizedBox(height: 12),
                     // Pinned details (Google Maps deep-link comment placeholder)
                     InkWell(
@@ -289,17 +224,17 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
-                            const Icon(Icons.map_outlined, color: Color(0xFF3B82F6), size: 18),
+                            const Icon(Icons.map_outlined, color: Color(0xFF4285F4), size: 18),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Pinned Evidence: ${widget.complaint.rtoCode} Municipal Sector • Open in Google Maps',
                                 style: const TextStyle(
-                                  color: Color(0xFF60A5FA),
+                                  color: Color(0xFF0058BD),
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFF60A5FA),
+                                  decorationColor: Color(0xFF0058BD),
                                 ),
                               ),
                             ),
@@ -308,7 +243,7 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    // Clean, centered gray placeholder text if no comments exist
+                    // Clean placeholder text if no comments exist
                     Center(
                       child: Text(
                         widget.complaint.comments.isEmpty
@@ -316,7 +251,7 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
                             : '"${widget.complaint.comments.first}" — Verified Citizen',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Color(0xFF71717A), // Neutral gray placeholder
+                          color: Color(0xFF70757A),
                           fontSize: 13,
                           fontStyle: FontStyle.italic,
                         ),
@@ -327,6 +262,107 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Normal infrastructure image view (StreetVoice Light UI)
+  Widget _buildNormalImageView(BoxConstraints constraints) {
+    return Container(
+      width: constraints.maxWidth,
+      height: 240,
+      decoration: const BoxDecoration(color: Color(0xFFEAEEF4)),
+      child: Image.network(
+        widget.complaint.imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
+      ),
+    );
+  }
+
+  /// Image macro meme presentation layer with bold white Impact typography
+  /// styled with a 1.5dp black text stroke border aligned exactly to the top and bottom borders.
+  Widget _buildMacroMemeLayer(BoxConstraints constraints) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background image
+        Image.network(
+          widget.complaint.imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
+        ),
+        // Subtle darkening vignette so white meme text pops with high legibility
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.35),
+          ),
+        ),
+        // Top and bottom borders text layout
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Upper macro meme text aligned exactly to the top border
+              _buildMacroMemeText(widget.complaint.title.toUpperCase()),
+              // Lower punchline meme text aligned exactly to the bottom border
+              _buildMacroMemeText(widget.complaint.satireText.toUpperCase()),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Helper rendering bold white Impact typography styled with a 1.5dp black text stroke border
+  Widget _buildMacroMemeText(String text) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Black stroke border (3.0 strokeWidth produces 1.5dp outline around edges)
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.0,
+            height: 1.15,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 3.0
+              ..color = Colors.black,
+          ),
+        ),
+        // White solid text fill
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.0,
+            height: 1.15,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      color: const Color(0xFFEAEEF4),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.broken_image_outlined, color: Color(0xFF70757A), size: 36),
+          SizedBox(height: 8),
+          Text('Civic Evidence Photo Unavailable', style: TextStyle(color: Color(0xFF424753), fontSize: 12)),
         ],
       ),
     );
