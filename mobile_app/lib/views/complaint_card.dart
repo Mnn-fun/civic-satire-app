@@ -281,34 +281,39 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
     );
   }
 
-  /// Image macro meme presentation layer with bold white Impact typography
-  /// styled with a 1.5dp black text stroke border aligned exactly to the top and bottom borders.
+  /// Image macro meme presentation layer with Ghibli Art style visuals and clean typography
+  /// styled with zero overflow protection.
   Widget _buildMacroMemeLayer(BoxConstraints constraints) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image
+        // Background Ghibli Art Style Meme image (or fallback to original image)
         Image.network(
-          widget.complaint.imageUrl,
+          widget.complaint.ghibliMemeUrl ?? widget.complaint.imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => _buildErrorPlaceholder(),
         ),
         // Subtle darkening vignette so white meme text pops with high legibility
         Container(
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.35),
+            color: Colors.black.withValues(alpha: 0.38),
           ),
         ),
-        // Top and bottom borders text layout
+        // Top and bottom borders text layout with zero overflow guarantee
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Upper macro meme text aligned exactly to the top border
-              _buildMacroMemeText(widget.complaint.title.toUpperCase()),
+              Flexible(
+                child: _buildMacroMemeText(widget.complaint.title.toUpperCase(), maxLines: 2),
+              ),
+              const SizedBox(height: 8),
               // Lower punchline meme text aligned exactly to the bottom border
-              _buildMacroMemeText(widget.complaint.satireText.toUpperCase()),
+              Flexible(
+                child: _buildMacroMemeText(widget.complaint.satireText.toUpperCase(), maxLines: 3),
+              ),
             ],
           ),
         ),
@@ -316,24 +321,26 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
     );
   }
 
-  /// Helper rendering bold white Impact typography styled with a 1.5dp black text stroke border
-  Widget _buildMacroMemeText(String text) {
+  /// Helper rendering bold white typography styled with a clean stroke border and zero overflow
+  Widget _buildMacroMemeText(String text, {int maxLines = 3}) {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Black stroke border (3.0 strokeWidth produces 1.5dp outline around edges)
+        // Black stroke border
         Text(
           text,
           textAlign: TextAlign.center,
+          maxLines: maxLines,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: 'Roboto',
-            fontSize: 20,
+            fontSize: 13.5, // Reduced text size for elegance and zero overflow
             fontWeight: FontWeight.w900,
-            letterSpacing: 1.0,
-            height: 1.15,
+            letterSpacing: 0.8,
+            height: 1.2,
             foreground: Paint()
               ..style = PaintingStyle.stroke
-              ..strokeWidth = 3.0
+              ..strokeWidth = 2.5
               ..color = Colors.black,
           ),
         ),
@@ -341,12 +348,14 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
         Text(
           text,
           textAlign: TextAlign.center,
+          maxLines: maxLines,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontFamily: 'Roboto',
-            fontSize: 20,
+            fontSize: 13.5, // Reduced text size for elegance and zero overflow
             fontWeight: FontWeight.w900,
-            letterSpacing: 1.0,
-            height: 1.15,
+            letterSpacing: 0.8,
+            height: 1.2,
             color: Colors.white,
           ),
         ),

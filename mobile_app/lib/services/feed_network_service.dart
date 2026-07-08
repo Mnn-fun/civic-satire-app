@@ -132,6 +132,7 @@ class FeedNetworkService {
         description: 'Multiple deep potholes near Andheri flyover causing severe traffic jams and vehicle damage during peak monsoon commute hours.',
         rtoCode: 'MH-01',
         imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80',
+        ghibliMemeUrl: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80', // Lunar astronaut crater simulation park meme
         satireText: 'Municipal Corporation clarifies that these are not potholes, but a newly commissioned lunar surface simulation park for aspiring astronauts.',
         upvotes: 1842,
         createdAt: now.subtract(const Duration(minutes: 15)),
@@ -145,6 +146,7 @@ class FeedNetworkService {
         description: 'Outer Ring Road lane reduced to single file due to unfinished underground wiring and drainage work with no workers on site.',
         rtoCode: 'DL-01',
         imageUrl: 'https://images.unsplash.com/photo-1541888946425-d0ebb18086f6?auto=format&fit=crop&w=800&q=80',
+        ghibliMemeUrl: 'https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?auto=format&fit=crop&w=800&q=80', // Ancient archaeological temple ruins meme
         satireText: 'Archaeological Survey of India declared the excavation a protected heritage site after discovering tools from the 2018 municipal budget.',
         upvotes: 2410,
         createdAt: now.subtract(const Duration(hours: 2)),
@@ -156,6 +158,7 @@ class FeedNetworkService {
         description: 'Garbage collection trucks have skipped the Whitefield sector for three consecutive days, blocking pedestrian sidewalk access completely.',
         rtoCode: 'KA-05',
         imageUrl: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80',
+        ghibliMemeUrl: 'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=800&q=80', // Lush overgrown jungle biodiversity rainforest meme
         satireText: 'Local tech startups are now pitching AI-powered odor-canceling headphones to help pedestrians navigate the new organic biodiversity corridor.',
         upvotes: 950,
         createdAt: now.subtract(const Duration(hours: 5)),
@@ -167,6 +170,7 @@ class FeedNetworkService {
         description: 'Drainage failure at Salt Lake Sector V underpass has left 3 feet of stagnant water, forcing thousands of commuters into massive gridlock.',
         rtoCode: 'WB-01',
         imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80',
+        ghibliMemeUrl: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=800&q=80', // Venice gondola canal Little Venice meme
         satireText: 'Kolkata municipal council declares the waterlogged street an urban heritage fishing corridor. Tram rides diverted indefinitely.',
         upvotes: 3120,
         createdAt: now.subtract(const Duration(hours: 8)),
@@ -178,6 +182,7 @@ class FeedNetworkService {
         description: 'New smart-lighting initiative along OMR highway turns lights on at 10 AM and shuts them down completely at sunset.',
         rtoCode: 'TN-01',
         imageUrl: 'https://images.unsplash.com/photo-1541888946425-d0ebb18086f6?auto=format&fit=crop&w=800&q=80',
+        ghibliMemeUrl: 'https://images.unsplash.com/photo-1530569673472-307dc017a82d?auto=format&fit=crop&w=800&q=80', // Blinding bright daytime sun rays in blue sky meme
         satireText: 'Chennai Corporation introduces smart-road initiative where streetlights work exclusively during daytime solar hours to save battery.',
         upvotes: 1420,
         createdAt: now.subtract(const Duration(hours: 14)),

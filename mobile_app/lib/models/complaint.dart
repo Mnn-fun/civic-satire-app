@@ -5,6 +5,7 @@ class Complaint {
   final String description;
   final String rtoCode;
   final String imageUrl;
+  final String? ghibliMemeUrl; // Ghibli Art Style Meme illustration for AI Satire Mode
   final String satireText;
   final int upvotes;
   final DateTime createdAt;
@@ -16,6 +17,7 @@ class Complaint {
     required this.description,
     required this.rtoCode,
     required this.imageUrl,
+    this.ghibliMemeUrl,
     required this.satireText,
     required this.upvotes,
     required this.createdAt,
@@ -55,6 +57,7 @@ class Complaint {
       description: json['description']?.toString() ?? 'No description provided.',
       rtoCode: json['rto_code']?.toString() ?? json['rtoCode']?.toString() ?? 'MH-01',
       imageUrl: json['image_url']?.toString() ?? json['imageUrl']?.toString() ?? 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80',
+      ghibliMemeUrl: json['ghibli_meme_url']?.toString() ?? json['ghibliMemeUrl']?.toString(),
       satireText: json['satire_text']?.toString() ?? json['satireText']?.toString() ?? 'Municipal authorities declare this hazard an essential modern art installation.',
       upvotes: (json['upvotes'] is num) ? (json['upvotes'] as num).toInt() : 0,
       createdAt: extractDate(json['created_at'] ?? json['createdAt']),
@@ -71,6 +74,7 @@ class Complaint {
       'description': description,
       'rto_code': rtoCode,
       'image_url': imageUrl,
+      if (ghibliMemeUrl != null) 'ghibli_meme_url': ghibliMemeUrl,
       'satire_text': satireText,
       'upvotes': upvotes,
       'created_at': createdAt.toIso8601String(),
@@ -84,6 +88,7 @@ class Complaint {
     String? description,
     String? rtoCode,
     String? imageUrl,
+    String? ghibliMemeUrl,
     String? satireText,
     int? upvotes,
     DateTime? createdAt,
@@ -95,6 +100,7 @@ class Complaint {
       description: description ?? this.description,
       rtoCode: rtoCode ?? this.rtoCode,
       imageUrl: imageUrl ?? this.imageUrl,
+      ghibliMemeUrl: ghibliMemeUrl ?? this.ghibliMemeUrl,
       satireText: satireText ?? this.satireText,
       upvotes: upvotes ?? this.upvotes,
       createdAt: createdAt ?? this.createdAt,

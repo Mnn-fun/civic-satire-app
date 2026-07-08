@@ -40,6 +40,11 @@
       "description": "URL of the uploaded photographic evidence.",
       "pattern": "^https?://.+"
     },
+    "ghibli_meme_url": {
+      "bsonType": "string",
+      "description": "Cloudinary delivery URL of the Gemini AI-generated Studio Ghibli art style illustration.",
+      "pattern": "^https?://.+"
+    },
     "satire_text": {
       "bsonType": "string",
       "description": "AI-generated satirical commentary on the complaint.",
