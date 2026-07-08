@@ -43,7 +43,6 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isRegistering = false;
-  bool _simulateNetworkFailure = false;
   String? _errorMessage;
 
   late AnimationController _animationController;
@@ -92,10 +91,6 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
 
     try {
       await Future.delayed(const Duration(milliseconds: 800));
-
-      if (_simulateNetworkFailure) {
-        throw TimeoutException('Network handshake timed out. Background internet connection unavailable.');
-      }
 
       final success = await globalAuth.authenticateUser(email, pass);
       if (success) {
@@ -190,25 +185,6 @@ class _CitizenRegistrationScreenState extends ConsumerState<CitizenRegistrationS
           isCitizen ? 'Citizen Registration' : 'Government Office Registration',
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF171C20)),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: ActionChip(
-              avatar: Icon(
-                _simulateNetworkFailure ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-                color: _simulateNetworkFailure ? const Color(0xFFFBBC04) : const Color(0xFF34A853),
-                size: 16,
-              ),
-              label: Text(
-                _simulateNetworkFailure ? 'Offline Sim' : 'Online Sim',
-                style: const TextStyle(color: Color(0xFF171C20), fontSize: 11, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: const Color(0xFFF6FAFF),
-              side: BorderSide(color: _simulateNetworkFailure ? const Color(0xFFFBBC04) : const Color(0xFFDEE3E8), width: 1.5),
-              onPressed: () => setState(() => _simulateNetworkFailure = !_simulateNetworkFailure),
-            ),
-          ),
-        ],
       ),
       body: SafeArea(
         child: Center(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/complaint.dart';
+import 'package:mobile_app/providers/global_auth_provider.dart';
 import 'package:mobile_app/views/discourse_section.dart';
 
 // Riverpod 3 provider tracking if AI Satire Mode is toggled (simulated via shake or tap)
@@ -17,8 +18,13 @@ final isSatireModeProvider = satireModeProvider; // Alias for seamless compatibi
 
 class ComplaintCard extends ConsumerStatefulWidget {
   final Complaint complaint;
+  final bool suppressSatire;
 
-  const ComplaintCard({super.key, required this.complaint});
+  const ComplaintCard({
+    super.key,
+    required this.complaint,
+    this.suppressSatire = false,
+  });
 
   @override
   ConsumerState<ComplaintCard> createState() => _ComplaintCardState();
@@ -35,7 +41,9 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isSatireMode = ref.watch(satireModeProvider);
+    final authState = ref.watch(globalAuthProvider);
+    final isGov = widget.suppressSatire || authState.role == UserRole.government;
+    final isSatireMode = !isGov && ref.watch(satireModeProvider);
     final theme = Theme.of(context);
 
     return Container(
@@ -152,63 +160,114 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
             },
           ),
 
-          // Footer / Accordion Trigger Bar
-          InkWell(
-            onTap: _toggleAccordion,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.thumb_up_alt_rounded,
-                    size: 18,
-                    color: Color(0xFF4285F4), // Google Blue icon
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${widget.complaint.upvotes}',
-                    style: const TextStyle(
-                      color: Color(0xFF171C20),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+          // Footer Action Bar: Formal Administrative Actions for Gov or Citizen Discourse for Citizens
+          if (isGov)
+            _buildGovAdministrativeActions()
+          else ...[
+            InkWell(
+              onTap: _toggleAccordion,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.thumb_up_alt_rounded,
+                      size: 18,
+                      color: Color(0xFF4285F4), // Google Blue icon
                     ),
-                  ),
-                  const SizedBox(width: 20),
-                  const Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 16,
-                    color: Color(0xFF70757A),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _isExpanded ? 'Hide Discourse' : 'Discourse (${widget.complaint.comments.length})',
-                    style: const TextStyle(
-                      color: Color(0xFF424753),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(width: 6),
+                    Text(
+                      '${widget.complaint.upvotes}',
+                      style: const TextStyle(
+                        color: Color(0xFF171C20),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    _isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                    color: const Color(0xFF70757A),
-                  ),
-                ],
+                    const SizedBox(width: 20),
+                    const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 16,
+                      color: Color(0xFF70757A),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _isExpanded ? 'Hide Discourse' : 'Discourse (${widget.complaint.comments.length})',
+                      style: const TextStyle(
+                        color: Color(0xFF424753),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      _isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                      color: const Color(0xFF70757A),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // In-line Accordion Expansion utilizing DiscourseSection
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 250),
-            crossFadeState: _isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            firstChild: const SizedBox(width: double.infinity, height: 0),
-            secondChild: DiscourseSection(
-              complaintId: widget.complaint.id,
-              initialComments: widget.complaint.comments,
-              rtoCode: widget.complaint.rtoCode,
+            // In-line Accordion Expansion utilizing DiscourseSection
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 250),
+              crossFadeState: _isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox(width: double.infinity, height: 0),
+              secondChild: DiscourseSection(
+                complaintId: widget.complaint.id,
+                initialComments: widget.complaint.comments,
+                rtoCode: widget.complaint.rtoCode,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGovAdministrativeActions() {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFDEE3E8), width: 1.0)),
+        color: Color(0xFFF8FAFC),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Inspector assigned to Municipal Case #${widget.complaint.rtoCode}')),
+              );
+            },
+            icon: const Icon(Icons.person_add_alt_1_rounded, size: 16, color: Color(0xFF0058BD)),
+            label: const Text('Assign Inspector', style: TextStyle(color: Color(0xFF0058BD), fontSize: 12, fontWeight: FontWeight.w700)),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF0058BD), width: 1.2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Case #${widget.complaint.rtoCode} marked as Dispatched to Municipality')),
+              );
+            },
+            icon: const Icon(Icons.local_shipping_rounded, size: 16, color: Colors.white),
+            label: const Text('Mark Dispatched', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF137333),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           ),
         ],

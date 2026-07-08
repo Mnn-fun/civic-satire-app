@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:mobile_app/models/complaint.dart';
-import 'package:mobile_app/services/auth_service.dart';
+import 'package:mobile_app/providers/global_auth_provider.dart';
+import 'package:mobile_app/services/auth_service.dart' hide UserRole;
 import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/views/complaint_card.dart';
 import 'package:mobile_app/views/login_screen.dart';
@@ -21,6 +22,7 @@ class NationalFeedScreen extends ConsumerStatefulWidget {
 class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
   StreamSubscription<AccelerometerEvent>? _accelerometerSubscription;
   DateTime? _lastShakeTime;
+  double? _lastX, _lastY, _lastZ;
   int _selectedNavIndex = 0; // 0: National Feed, 1: Reported, 2: Account
 
   @override
@@ -29,11 +31,26 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
     _initShakeListener();
   }
 
-  /// Initializes hardware accelerometer stream to detect physical shake gestures.
+  /// Initializes hardware accelerometer stream with strict 16.0 m/s^2 force target
+  /// and sharp direction delta dampening to prevent false triggers during steady walking.
   void _initShakeListener() {
     try {
       _accelerometerSubscription = accelerometerEventStream().listen((AccelerometerEvent event) {
-        if (event.x.abs() > 12.0 || event.y.abs() > 12.0 || event.z.abs() > 15.0) {
+        final deltaX = _lastX == null ? 0.0 : (event.x - _lastX!).abs();
+        final deltaY = _lastY == null ? 0.0 : (event.y - _lastY!).abs();
+        final deltaZ = _lastZ == null ? 0.0 : (event.z - _lastZ!).abs();
+
+        _lastX = event.x;
+        _lastY = event.y;
+        _lastZ = event.z;
+
+        final exceedsThreshold = event.x.abs() >= 16.0 ||
+            event.y.abs() >= 16.0 ||
+            event.z.abs() >= 16.0;
+
+        final hasSharpDelta = deltaX >= 12.0 || deltaY >= 12.0 || deltaZ >= 12.0;
+
+        if (exceedsThreshold && hasSharpDelta) {
           _handleShakeDetected();
         }
       });
@@ -254,7 +271,12 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
               separatorBuilder: (context, index) => const SizedBox(height: 32),
               itemBuilder: (context, index) {
                 final complaint = displayList[index];
-                return ComplaintCard(complaint: complaint);
+                final authState = ref.watch(globalAuthProvider);
+                final isGov = authState.role == UserRole.government;
+                return ComplaintCard(
+                  complaint: complaint,
+                  suppressSatire: isGov,
+                );
               },
             ),
           );
