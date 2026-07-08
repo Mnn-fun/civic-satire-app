@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/theme/app_theme.dart';
-import 'package:mobile_app/views/login_screen.dart';
+import 'package:mobile_app/views/dashboard_orchestrator.dart';
 
 void main() {
   runApp(
@@ -24,8 +24,8 @@ class CivicSatireApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
-      // Clean routing to the role-selection login screen
-      home: const LoginScreen(),
+      // Clean routing via DashboardOrchestrator watching globalAuthProvider
+      home: const DashboardOrchestrator(),
     );
   }
 }
