@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/providers/global_auth_provider.dart' as gap;
 import 'package:mobile_app/services/auth_service.dart';
 import 'package:mobile_app/services/global_session_service.dart';
 import 'package:mobile_app/views/citizen_registration_screen.dart';
@@ -72,6 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
       await globalAuth.authenticateUser(email, pass);
       final success = legacyAuth.loginWithRole(targetRole, masterKey: pass);
+      ref.read(gap.globalAuthProvider.notifier).login(email, pass);
 
       if (success && mounted) {
         Navigator.of(context).pushReplacement(
@@ -83,6 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
         // Fallback login for offline/demo mode
         final legacyAuth = ref.read(authProvider.notifier);
         legacyAuth.loginWithRole(_selectedRole);
+        ref.read(gap.globalAuthProvider.notifier).login(email, pass);
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const DashboardOrchestrator()),
         );
