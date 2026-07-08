@@ -11,6 +11,7 @@ class Complaint {
   final DateTime createdAt;
   final List<String> comments;
   final String status;
+  final String? reporterEmail;
 
   const Complaint({
     required this.id,
@@ -24,6 +25,7 @@ class Complaint {
     required this.createdAt,
     this.comments = const [],
     this.status = 'Review Pending',
+    this.reporterEmail,
   });
 
   /// Factory constructor mapping incoming Stitch JSON/BSON payloads into Dart objects
@@ -67,6 +69,7 @@ class Complaint {
           ? (json['comments'] as List).map((e) => e.toString()).toList()
           : [],
       status: json['status']?.toString() ?? 'Review Pending',
+      reporterEmail: json['reporter_email']?.toString() ?? json['reporterEmail']?.toString(),
     );
   }
 
@@ -77,12 +80,13 @@ class Complaint {
       'description': description,
       'rto_code': rtoCode,
       'image_url': imageUrl,
-      if (ghibliMemeUrl != null) 'ghibli_meme_url': ghibliMemeUrl,
+      'ghibli_meme_url':? ghibliMemeUrl,
       'satire_text': satireText,
       'upvotes': upvotes,
       'created_at': createdAt.toIso8601String(),
       'comments': comments,
       'status': status,
+      'reporter_email':? reporterEmail,
     };
   }
 
@@ -98,6 +102,7 @@ class Complaint {
     DateTime? createdAt,
     List<String>? comments,
     String? status,
+    String? reporterEmail,
   }) {
     return Complaint(
       id: id ?? this.id,
@@ -111,6 +116,7 @@ class Complaint {
       createdAt: createdAt ?? this.createdAt,
       comments: comments ?? this.comments,
       status: status ?? this.status,
+      reporterEmail: reporterEmail ?? this.reporterEmail,
     );
   }
 }

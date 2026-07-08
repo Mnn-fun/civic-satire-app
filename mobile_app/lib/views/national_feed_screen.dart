@@ -6,6 +6,7 @@ import 'package:mobile_app/models/complaint.dart';
 import 'package:mobile_app/providers/global_auth_provider.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/views/citizen_account_screen.dart';
+import 'package:mobile_app/views/citizen_reported_history_screen.dart';
 import 'package:mobile_app/views/complaint_card.dart';
 import 'package:mobile_app/views/submit_complaint_screen.dart';
 
@@ -253,7 +254,15 @@ class _NationalFeedScreenState extends ConsumerState<NationalFeedScreen> {
         // Index 0: National Feed
         _buildFeedContent(feedAsyncValue, isSatireMode, isReportedTab: false),
         // Index 1: Reported
-        _buildFeedContent(feedAsyncValue, isSatireMode, isReportedTab: true),
+        CitizenReportedHistoryScreen(
+          onReportIssuePressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const SubmitComplaintScreen(),
+              ),
+            );
+          },
+        ),
         // Index 2: Account slot pointing directly to CitizenAccountScreen
         const CitizenAccountScreen(showAppBar: false),
       ],

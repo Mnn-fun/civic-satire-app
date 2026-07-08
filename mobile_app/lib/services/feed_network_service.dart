@@ -275,6 +275,7 @@ class FeedNotifier extends Notifier<AsyncValue<List<Complaint>>> {
     required String description,
     required String rtoCode,
     required String imageUrl,
+    String? reporterEmail,
   }) async {
     final payload = {
       'title': title,
@@ -284,6 +285,7 @@ class FeedNotifier extends Notifier<AsyncValue<List<Complaint>>> {
       'satire_text': 'AI Agent evaluated $rtoCode hazard. Permanent interactive civic art installation declared.',
       'upvotes': 0,
       'created_at': DateTime.now().toIso8601String(),
+      'reporter_email':? reporterEmail,
     };
 
     final success = await _networkService.submitComplaint(payload);
@@ -299,6 +301,7 @@ class FeedNotifier extends Notifier<AsyncValue<List<Complaint>>> {
           upvotes: 0,
           createdAt: DateTime.now(),
           comments: [],
+          reporterEmail: reporterEmail,
         );
         state = AsyncValue.data([newComplaint, ...currentList].take(15).toList());
       });
