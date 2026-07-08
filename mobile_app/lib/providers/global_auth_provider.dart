@@ -154,6 +154,11 @@ class GlobalAuthNotifier extends Notifier<GlobalAuthState> {
     );
   }
 
+  /// Updates the active session's regional RTO jurisdiction scope.
+  void updateRtoScope(String newRtoScope) {
+    state = state.copyWith(rtoScope: newRtoScope.trim().toUpperCase());
+  }
+
   /// Resets session to initial unauthenticated state.
   void logout() {
     state = GlobalAuthState.initial();
