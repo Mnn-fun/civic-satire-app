@@ -11,13 +11,11 @@ import 'package:mobile_app/views/gateway_login_screen.dart';
 class CitizenAccountScreen extends ConsumerStatefulWidget {
   final bool showAppBar;
 
-  const CitizenAccountScreen({
-    super.key,
-    this.showAppBar = true,
-  });
+  const CitizenAccountScreen({super.key, this.showAppBar = true});
 
   @override
-  ConsumerState<CitizenAccountScreen> createState() => _CitizenAccountScreenState();
+  ConsumerState<CitizenAccountScreen> createState() =>
+      _CitizenAccountScreenState();
 }
 
 class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
@@ -52,7 +50,11 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
               iconTheme: const IconThemeData(color: Color(0xFF171C20)),
               title: const Row(
                 children: [
-                  Icon(Icons.person_pin_circle_rounded, color: Color(0xFF4285F4), size: 24),
+                  Icon(
+                    Icons.person_pin_circle_rounded,
+                    color: Color(0xFF4285F4),
+                    size: 24,
+                  ),
                   SizedBox(width: 10),
                   Text(
                     'Citizen Portal Account',
@@ -82,30 +84,32 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
               ),
 
               const SizedBox(height: 24), // Vertical Spacing Divider
-
               // 2. INTERACTIVE FEATURE PREFERENCE ROW (AI Satire Overlay Engine)
               _buildSatirePreferenceRow(
                 isSatireMode: isSatireMode,
-                onToggle: (val) => ref.read(satireModeProvider.notifier).setSatireMode(val),
+                onToggle: (val) =>
+                    ref.read(satireModeProvider.notifier).setSatireMode(val),
               ),
 
               const SizedBox(height: 14), // Vertical Spacing Divider
-
               // Passive Diagnostic Row (Hardware Shaker Handshake)
               _buildDiagnosticStatusRow(),
 
               const SizedBox(height: 28), // Vertical Spacing Divider
-
               // 3. DYNAMIC REGIONAL RTO DROPDOWN MODIFIER
               _buildRtoDropdownModifier(
                 selectedRto: selectedRto,
                 onChanged: (newRto) {
                   if (newRto != null) {
-                    ref.read(globalAuthProvider.notifier).updateRtoScope(newRto);
+                    ref
+                        .read(globalAuthProvider.notifier)
+                        .updateRtoScope(newRto);
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Primary jurisdiction updated to RTO Zone: $newRto'),
+                        content: Text(
+                          'Primary jurisdiction updated to RTO Zone: $newRto',
+                        ),
                         backgroundColor: const Color(0xFF171C20),
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -115,7 +119,6 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
               ),
 
               const SizedBox(height: 36), // Vertical Spacing Divider
-
               // 4. ACTION TERMINAL (Sign Out of Citizen Portal)
               _buildActionTerminal(),
               const SizedBox(height: 24),
@@ -129,7 +132,10 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
   /// Helper to format raw email prefixes into readable human display names
   String _formatUsername(String rawName) {
     if (rawName.isEmpty) return 'Citizen Explorer';
-    final parts = rawName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), ' ').trim().split(RegExp(r'\s+'));
+    final parts = rawName
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]'), ' ')
+        .trim()
+        .split(RegExp(r'\s+'));
     return parts
         .where((p) => p.isNotEmpty)
         .map((p) => '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
@@ -168,7 +174,10 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4285F4).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
@@ -204,7 +213,10 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(6),
@@ -254,7 +266,11 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.auto_awesome_rounded, size: 18, color: Color(0xFFEA4335)),
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 18,
+                      color: Color(0xFFEA4335),
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'AI Satire Overlay Engine',
@@ -377,7 +393,10 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             initialValue: selectedRto,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF70757A)),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF70757A),
+            ),
             style: const TextStyle(
               color: Color(0xFF171C20),
               fontSize: 14,
@@ -385,8 +404,14 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
             ),
             decoration: InputDecoration(
               labelText: 'Primary Regional Jurisdiction',
-              labelStyle: const TextStyle(color: Color(0xFF424753), fontSize: 13),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              labelStyle: const TextStyle(
+                color: Color(0xFF424753),
+                fontSize: 13,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 14,
+              ),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
               border: OutlineInputBorder(
@@ -399,7 +424,10 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF4285F4), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF4285F4),
+                  width: 1.5,
+                ),
               ),
             ),
             items: _rtoOptions.map((rto) {
@@ -448,7 +476,11 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
           (route) => false,
         );
       },
-      icon: const Icon(Icons.logout_rounded, size: 20, color: Color(0xFFEA4335)),
+      icon: const Icon(
+        Icons.logout_rounded,
+        size: 20,
+        color: Color(0xFFEA4335),
+      ),
       label: const Text(
         'Sign Out of Citizen Portal',
         style: TextStyle(
@@ -460,6 +492,7 @@ class _CitizenAccountScreenState extends ConsumerState<CitizenAccountScreen> {
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: Color(0xFFEA4335), width: 1.5),
         padding: const EdgeInsets.symmetric(vertical: 16),
+        backgroundColor: Color.fromARGB(255, 255, 223, 220),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );

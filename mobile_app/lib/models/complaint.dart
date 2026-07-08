@@ -10,6 +10,7 @@ class Complaint {
   final int upvotes;
   final DateTime createdAt;
   final List<String> comments;
+  final String status;
 
   const Complaint({
     required this.id,
@@ -22,6 +23,7 @@ class Complaint {
     required this.upvotes,
     required this.createdAt,
     this.comments = const [],
+    this.status = 'Review Pending',
   });
 
   /// Factory constructor mapping incoming Stitch JSON/BSON payloads into Dart objects
@@ -64,6 +66,7 @@ class Complaint {
       comments: (json['comments'] is List)
           ? (json['comments'] as List).map((e) => e.toString()).toList()
           : [],
+      status: json['status']?.toString() ?? 'Review Pending',
     );
   }
 
@@ -79,6 +82,7 @@ class Complaint {
       'upvotes': upvotes,
       'created_at': createdAt.toIso8601String(),
       'comments': comments,
+      'status': status,
     };
   }
 
@@ -93,6 +97,7 @@ class Complaint {
     int? upvotes,
     DateTime? createdAt,
     List<String>? comments,
+    String? status,
   }) {
     return Complaint(
       id: id ?? this.id,
@@ -105,6 +110,7 @@ class Complaint {
       upvotes: upvotes ?? this.upvotes,
       createdAt: createdAt ?? this.createdAt,
       comments: comments ?? this.comments,
+      status: status ?? this.status,
     );
   }
 }

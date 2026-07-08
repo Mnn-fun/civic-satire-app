@@ -5,6 +5,7 @@ import 'package:mobile_app/providers/global_auth_provider.dart';
 import 'package:mobile_app/services/feed_network_service.dart';
 import 'package:mobile_app/views/admin_panel_screen.dart';
 import 'package:mobile_app/views/gateway_login_screen.dart';
+import 'package:mobile_app/views/government_case_board_screen.dart';
 import 'package:mobile_app/views/national_feed_screen.dart';
 
 /// Root Navigation Switcher for STREET VOICE.
@@ -26,7 +27,7 @@ class DashboardOrchestrator extends ConsumerWidget {
       case UserRole.citizen:
         return const CitizenWorkspaceView();
       case UserRole.government:
-        return const MunicipalTelemetryBoardView();
+        return const GovernmentCaseBoardScreen();
       case UserRole.admin:
         return const AdminPanelScreen();
     }
