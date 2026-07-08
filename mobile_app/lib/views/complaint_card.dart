@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/models/complaint.dart';
+import 'package:mobile_app/views/discourse_section.dart';
 
 // Riverpod 3 provider tracking if AI Satire Mode is toggled (simulated via shake or tap)
 class SatireModeNotifier extends Notifier<bool> {
@@ -197,69 +198,17 @@ class _ComplaintCardState extends ConsumerState<ComplaintCard> {
             ),
           ),
 
-          // In-line Accordion Expansion
-          AnimatedContainer(
+          // In-line Accordion Expansion utilizing DiscourseSection
+          AnimatedCrossFade(
             duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            height: _isExpanded ? 130 : 0,
-            width: double.infinity,
-            clipBehavior: Clip.hardEdge,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF6FAFF), // Airy light surface container
-            ),
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Divider(color: Color(0xFFDEE3E8), height: 1),
-                    const SizedBox(height: 12),
-                    // Pinned details (Google Maps deep-link comment placeholder)
-                    InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.map_outlined, color: Color(0xFF4285F4), size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Pinned Evidence: ${widget.complaint.rtoCode} Municipal Sector • Open in Google Maps',
-                                style: const TextStyle(
-                                  color: Color(0xFF0058BD),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFF0058BD),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    // Clean placeholder text if no comments exist
-                    Center(
-                      child: Text(
-                        widget.complaint.comments.isEmpty
-                            ? 'No citizen discourse yet. Be the first to start the conversation.'
-                            : '"${widget.complaint.comments.first}" — Verified Citizen',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF70757A),
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox(width: double.infinity, height: 0),
+            secondChild: DiscourseSection(
+              complaintId: widget.complaint.id,
+              initialComments: widget.complaint.comments,
+              rtoCode: widget.complaint.rtoCode,
             ),
           ),
         ],
